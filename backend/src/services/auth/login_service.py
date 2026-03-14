@@ -32,5 +32,5 @@ class LoginService:
         user = await self._user_dao.get_by_username(request.username)
         if not user or not self._verify_password.execute(request.password, user.password):
             raise self.InvalidCredentialsError
-        token = self._create_token.execute(user.id)
-        return TokenResponseDTO(access_token=token)
+        access_token, refresh_token = self._create_token.execute(user.id)
+        return TokenResponseDTO(access_token=access_token, refresh_token=refresh_token)

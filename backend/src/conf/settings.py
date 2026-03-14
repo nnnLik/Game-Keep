@@ -22,6 +22,7 @@ class DBSettings(BaseSettings):
 class AuthSettings(BaseSettings):
     SECRET_KEY: str = Field('change-me', alias='SECRET_KEY')
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(60, alias='ACCESS_TOKEN_EXPIRE_MINUTES')
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(7, alias='REFRESH_TOKEN_EXPIRE_DAYS')
     ALGORITHM: str = Field('HS256', alias='JWT_ALGORITHM')
 
 

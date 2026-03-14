@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme {
+  --font-display: "Outfit", system-ui, sans-serif;
+}
+
+.sidebar-title {
+  font-family: var(--font-display);
+}

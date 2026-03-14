@@ -1,0 +1,43 @@
+.pnpm-store
+.venv
+venv
+.env
+*.db
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+dist
+build
+*.egg-info
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example

@@ -34,5 +34,5 @@ class RegisterService:
             raise self.UserAlreadyExistsError
         password_hash = self._create_password.execute(request.password)
         user = await self._user_dao.create(request.username, password_hash)
-        token = self._create_token.execute(user.id)
-        return TokenResponseDTO(access_token=token)
+        access_token, refresh_token = self._create_token.execute(user.id)
+        return TokenResponseDTO(access_token=access_token, refresh_token=refresh_token)
