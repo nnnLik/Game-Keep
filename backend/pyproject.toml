@@ -1,0 +1,21 @@
+[project]
+name = "backend"
+version = "0.1.0"
+requires-python = "==3.14.*"
+
+[dependency-groups]
+dev = [
+    "ipython==9.11.0",
+    "ruff==0.15.6",
+]
+prod = [
+    "aiosqlite==0.22.1",
+    "alembic==1.18.4",
+    "bcrypt==5.0.0",
+    "fastapi==0.135.1",
+    "pydantic==2.12.5",
+    "pydantic-settings==2.13.1",
+    "pyjwt==2.12.1",
+    "sqlalchemy[asyncio]==2.0.48",
+    "uvicorn==0.41.0",
+]
