@@ -30,7 +30,7 @@ async def login(
 ) -> TokenResponseDTO:
     service = LoginService.build(session)
     try:
-        return await service.execute(data)
+        return await service.execute(data.email, data.password)
     except LoginService.InvalidCredentialsError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -45,9 +45,19 @@ async def register(
 ) -> TokenResponseDTO:
     service = RegisterService.build(session)
     try:
-        return await service.execute(data)
-    except RegisterService.UserAlreadyExistsError as e:
+        return await service.execute(
+            data.username,
+            data.tag,
+            data.email,
+            data.password,
+        )
+    except RegisterService.TagAlreadyTakenError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='User already exists',
+            detail='Tag already taken',
+        ) from e
+    except RegisterService.EmailAlreadyTakenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Email already taken',
         ) from e
