@@ -6,8 +6,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from conf.settings import settings
+
 from models.base import Base
 import models.user
+import models.user_game
 
 config = context.config
 config.set_main_option('sqlalchemy.url', settings.db.URL)

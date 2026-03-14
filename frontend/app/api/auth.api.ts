@@ -6,7 +6,14 @@ export interface TokenResponse {
 }
 
 export interface LoginPayload {
+  email: string
+  password: string
+}
+
+export interface RegisterPayload {
   username: string
+  tag: string
+  email: string
   password: string
 }
 
@@ -36,7 +43,7 @@ export async function login(baseURL: string, payload: LoginPayload) {
   })
 }
 
-export async function register(baseURL: string, payload: LoginPayload) {
+export async function register(baseURL: string, payload: RegisterPayload) {
   return $fetch<TokenResponse>(ApiEndpoint.Auth.REGISTER, {
     baseURL,
     method: 'POST',

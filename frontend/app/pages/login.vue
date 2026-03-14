@@ -9,7 +9,7 @@ const config = useRuntimeConfig()
 const toast = useToast()
 
 const form = reactive({
-  username: '',
+  email: '',
   password: '',
 })
 
@@ -17,7 +17,7 @@ const loading = ref(false)
 const error = ref('')
 
 async function onSubmit() {
-  if (!form.username || !form.password) {
+  if (!form.email || !form.password) {
     error.value = 'Заполни все поля'
     return
   }
@@ -45,9 +45,10 @@ async function onSubmit() {
 
     <UForm @submit="onSubmit" class="space-y-4 w-full">
       <UInput
-        v-model="form.username"
-        placeholder="Имя пользователя"
-        autocomplete="username"
+        v-model="form.email"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
         size="lg"
         class="w-full"
         :disabled="loading"

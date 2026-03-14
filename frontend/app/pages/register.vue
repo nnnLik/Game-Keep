@@ -10,14 +10,23 @@ const toast = useToast()
 
 const form = reactive({
   username: '',
+  tag: '',
+  email: '',
   password: '',
 })
 
 const loading = ref(false)
 const error = ref('')
 
+function getErrorDetail(e: unknown): string {
+  const err = e as { data?: { detail?: string | Array<{ msg?: string }> } }
+  const d = err?.data?.detail
+  if (Array.isArray(d)) return d.map((x) => x.msg ?? '').filter(Boolean).join(', ') || 'Ошибка'
+  return (typeof d === 'string' ? d : null) ?? 'Ошибка регистрации'
+}
+
 async function onSubmit() {
-  if (!form.username || !form.password) {
+  if (!form.username || !form.tag || !form.email || !form.password) {
     error.value = 'Заполни все поля'
     return
   }
@@ -28,7 +37,7 @@ async function onSubmit() {
     useAuthStore().setTokens(res.access_token, res.refresh_token)
     await navigateTo('/')
   } catch (e: unknown) {
-    error.value = (e as { data?: { detail?: string } })?.data?.detail ?? 'Ошибка регистрации'
+    error.value = getErrorDetail(e)
     toast.add({ title: 'Ошибка', description: error.value, color: 'error' })
   } finally {
     loading.value = false
@@ -46,8 +55,25 @@ async function onSubmit() {
     <UForm @submit="onSubmit" class="space-y-4 w-full">
       <UInput
         v-model="form.username"
-        placeholder="Имя пользователя"
+        placeholder="Имя пользователя (мин. 5 символов)"
         autocomplete="username"
+        size="lg"
+        class="w-full"
+        :disabled="loading"
+      />
+      <UInput
+        v-model="form.tag"
+        placeholder="Тег (3–15 символов, a-z 0-9)"
+        autocomplete="off"
+        size="lg"
+        class="w-full"
+        :disabled="loading"
+      />
+      <UInput
+        v-model="form.email"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
         size="lg"
         class="w-full"
         :disabled="loading"
@@ -55,7 +81,7 @@ async function onSubmit() {
       <UInput
         v-model="form.password"
         type="password"
-        placeholder="Пароль"
+        placeholder="Пароль (мин. 8 символов)"
         autocomplete="new-password"
         size="lg"
         class="w-full"
