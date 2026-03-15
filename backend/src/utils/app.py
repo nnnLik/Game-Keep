@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.activities import router as activities_router
 from api.auth import router as auth_router
+from api.feed import router as feed_router
 from api.games import router as games_router
 from api.me import router as me_router
 from api.user_games import router as user_games_router
@@ -18,7 +20,9 @@ def build_app() -> FastAPI:
         allow_methods=['*'],
         allow_headers=['*'],
     )
+    app.include_router(activities_router)
     app.include_router(auth_router)
+    app.include_router(feed_router)
     app.include_router(games_router)
     app.include_router(me_router)
     app.include_router(user_games_router)

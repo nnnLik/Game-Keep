@@ -20,3 +20,8 @@ class User(Base, UUIDPKMixin):
         back_populates='user',
         cascade='all, delete-orphan',
     )
+    activities = relationship(
+        'Activity',
+        back_populates='user',
+        cascade='all, delete-orphan',
+    )

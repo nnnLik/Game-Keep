@@ -7,21 +7,21 @@ from models.base import Base
 from models.mixins import IntPkMixin
 
 
-class GameCommentVote(Base, IntPkMixin):
+class ActivityVote(Base, IntPkMixin):
     __table_args__ = (
-        UniqueConstraint('comment_id', 'user_id', 'is_like', name='uq_comment_user_is_like'),
+        UniqueConstraint("activity_id", "user_id", "is_like", name="uq_activity_user_is_like"),
     )
 
-    comment_id: Mapped[int] = mapped_column(
-        ForeignKey('game_comment.id', ondelete='CASCADE'),
+    activity_id: Mapped[int] = mapped_column(
+        ForeignKey("activity.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
     user_id: Mapped[UUID] = mapped_column(
-        ForeignKey('user.id', ondelete='CASCADE'),
+        ForeignKey("user.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
     is_like: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
-    comment = relationship('GameComment', back_populates='votes')
+    activity = relationship("Activity", back_populates="votes")

@@ -12,6 +12,11 @@ export const ApiEndpoint = {
     COMMENT_VOTE: (gameId: number, commentId: number) =>
       `/games/${gameId}/comments/${commentId}/vote`,
   },
+  Feed: {
+    LIST: '/feed',
+    ACTIVITY: (tag: string) => `/users/by-tag/${tag}/activity`,
+    VOTE: (id: number) => `/activities/${id}/vote`,
+  },
   Users: {
     LIST: '/users',
     BY_TAG: (tag: string) => `/users/by-tag/${tag}`,

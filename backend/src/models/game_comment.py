@@ -8,7 +8,6 @@ from models.mixins import IntPkMixin
 
 
 class GameComment(Base, IntPkMixin):
-    __tablename__ = 'game_comment'
     game_id: Mapped[int] = mapped_column(
         ForeignKey('user_game.id', ondelete='CASCADE'),
         nullable=False,

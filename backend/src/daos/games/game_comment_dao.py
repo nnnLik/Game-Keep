@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -30,6 +30,15 @@ class GameCommentDAO:
         )
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_root_comments_count(self, game_id: int) -> int:
+        stmt = (
+            select(func.count(GameComment.id))
+            .where(GameComment.game_id == game_id)
+            .where(GameComment.parent_id.is_(None))
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar() or 0
 
     async def get_by_id(self, comment_id: int) -> GameComment | None:
         stmt = (

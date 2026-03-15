@@ -4,6 +4,8 @@ from typing import Self
 from uuid import UUID
 
 import constants.game
+from constants.activity import ActivityActionType
+from daos.activity import ActivityDAO
 from daos.games.user_game_dao import UserGameDAO
 from dtos.users import GameResponseDTO
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,10 +14,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 @dataclass
 class CreateGameService:
     _user_game_dao: UserGameDAO
+    _activity_dao: ActivityDAO
 
     @classmethod
     def build(cls, session: AsyncSession) -> Self:
-        return cls(_user_game_dao=UserGameDAO.build(session))
+        return cls(
+            _user_game_dao=UserGameDAO.build(session),
+            _activity_dao=ActivityDAO.build(session),
+        )
 
     async def execute(
         self,
@@ -55,6 +61,11 @@ class CreateGameService:
             date_started=date_started,
             date_finished=date_finished,
             hours_played=round(hours_played, 1) if hours_played is not None else None,
+        )
+        await self._activity_dao.create(
+            user_id=user_id,
+            action_type=ActivityActionType.GAME_CREATED,
+            user_game_id=game.id,
         )
         genres_response = [{'id': str(i), 'description': s} for i, s in enumerate(game.genres or [])]
         return GameResponseDTO(

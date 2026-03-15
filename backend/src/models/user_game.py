@@ -45,3 +45,8 @@ class UserGame(Base, IntPkMixin):
         back_populates='game',
         cascade='all, delete-orphan',
     )
+    activities = relationship(
+        'Activity',
+        back_populates='user_game',
+        cascade='all, delete-orphan',
+    )

@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from dtos.users import MeResponseDTO, ProfileByTagResponseDTO, UsersListResponseDTO
 from infra.auth import get_current_user
+from dtos.feed import FeedPageResponseDTO
+from services.feed import GetUserActivityService
 from infra.db import get_db
 from models.user import User
 from services.users.create_banner_service import CreateBannerService
@@ -26,6 +28,23 @@ async def list_users(
 ) -> UsersListResponseDTO:
     service = ListUsersService.build(session)
     return await service.execute(limit=limit, cursor=cursor)
+
+
+@router.get('/by-tag/{tag}/activity', response_model=FeedPageResponseDTO)
+async def get_user_activity(
+    tag: str,
+    current_user: CurrentUserDep,
+    session: SessionDep,
+    cursor: int | None = Query(None),
+    limit: int = Query(20, ge=1, le=50),
+) -> FeedPageResponseDTO:
+    service = GetUserActivityService.build(session)
+    return await service.execute(
+        user_tag=tag,
+        current_user_id=current_user.id,
+        cursor=cursor,
+        limit=limit,
+    )
 
 
 @router.get('/by-tag/{tag}', response_model=ProfileByTagResponseDTO)

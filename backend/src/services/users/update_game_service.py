@@ -4,6 +4,8 @@ from typing import Self
 from uuid import UUID
 
 import constants.game
+from constants.activity import ActivityActionType
+from daos.activity import ActivityDAO
 from daos.games.user_game_dao import UserGameDAO
 from dtos.users import GameResponseDTO
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,10 +14,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 @dataclass
 class UpdateGameService:
     _user_game_dao: UserGameDAO
+    _activity_dao: ActivityDAO
 
     @classmethod
     def build(cls, session: AsyncSession) -> Self:
-        return cls(_user_game_dao=UserGameDAO.build(session))
+        return cls(
+            _user_game_dao=UserGameDAO.build(session),
+            _activity_dao=ActivityDAO.build(session),
+        )
 
     def _genres_to_response(
         self,
@@ -68,6 +74,24 @@ class UpdateGameService:
         if 'hours_played' in data:
             h = data['hours_played']
             kwargs['hours_played'] = round(h, 1) if h is not None else None
+
+        if 'is_favorite' in kwargs:
+            old_game = await self._user_game_dao.get_by_id(game_id)
+            if (
+                old_game
+                and old_game.user_id == user_id
+                and old_game.is_favorite != kwargs['is_favorite']
+            ):
+                action = (
+                    ActivityActionType.FAVORITE_ADDED
+                    if kwargs['is_favorite']
+                    else ActivityActionType.FAVORITE_REMOVED
+                )
+                await self._activity_dao.create(
+                    user_id=user_id,
+                    action_type=action,
+                    user_game_id=game_id,
+                )
 
         game = await self._user_game_dao.update(game_id, user_id, **kwargs)
         if game is None:

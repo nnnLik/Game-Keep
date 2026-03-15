@@ -16,6 +16,12 @@ const { $api } = useNuxtApp()
 const toast = useToast()
 const { fetchMe, fetchMyGames, uploadBanner, deleteBanner } = await import('~/api/users.api')
 import type { CreateGamePayload, GameResponse } from '~/api/users.api'
+import {
+  fetchActivity,
+  voteActivity,
+  type FeedPost,
+} from '~/api/feed.api'
+import { createComment } from '~/api/games.api'
 
 const showCreateModal = ref(false)
 const showBannerEditor = ref(false)
@@ -31,6 +37,11 @@ const games = ref<GameResponse[]>([])
 const loading = ref(true)
 const gamesLoading = ref(true)
 const error = ref<string | null>(null)
+const activityPosts = ref<FeedPost[]>([])
+const activityLoading = ref(false)
+const activityLoadingMore = ref(false)
+const activityNextCursor = ref<number | null>(null)
+const activitySentinelRef = ref<HTMLElement | null>(null)
 
 type SectionId = 'games' | 'activities'
 const activeSection = ref<SectionId>('games')
@@ -58,6 +69,26 @@ const tabCounts = computed(() => {
 })
 
 onMounted(async () => {
+  activityObserver = new IntersectionObserver(handleActivityIntersect, {
+    root: null,
+    rootMargin: '100px',
+    threshold: 0,
+  })
+  watch(
+    [() => activitySentinelRef.value, () => activeSection.value],
+    () => {
+      nextTick(() => {
+        if (
+          activeSection.value === 'activities' &&
+          activitySentinelRef.value &&
+          activityObserver
+        ) {
+          activityObserver.observe(activitySentinelRef.value)
+        }
+      })
+    },
+    { immediate: true }
+  )
   try {
     ;[user.value, games.value] = await Promise.all([
       fetchMe($api),
@@ -69,6 +100,10 @@ onMounted(async () => {
     loading.value = false
     gamesLoading.value = false
   }
+})
+
+onUnmounted(() => {
+  activityObserver?.disconnect()
 })
 
 const config = useRuntimeConfig()
@@ -85,6 +120,111 @@ function bannerFullUrl(bannerUrl: string | null | undefined): string | null {
   const url = `${base.replace(/\/$/, '')}/uploads/${bannerUrl}`
   return `${url}?v=${bannerCacheKey.value}`
 }
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function formatCommentDate(iso: string): string {
+  return new Date(iso).toLocaleString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+async function loadActivity(cursor?: number | null) {
+  const myTag = user.value?.tag
+  if (!myTag) return
+  if (cursor == null && activityPosts.value.length > 0) return
+  if (cursor != null) activityLoadingMore.value = true
+  else activityLoading.value = true
+  try {
+    const res = await fetchActivity($api, myTag, {
+      cursor: cursor ?? undefined,
+      limit: 20,
+    })
+    if (cursor != null) {
+      activityPosts.value.push(...res.items)
+    } else {
+      activityPosts.value = res.items
+    }
+    activityNextCursor.value = res.next_cursor
+  } catch (e) {
+    toast.add({ title: 'Не удалось загрузить активности', color: 'error' })
+  } finally {
+    activityLoading.value = false
+    activityLoadingMore.value = false
+  }
+}
+
+function onActivityTabClick() {
+  if (activityPosts.value.length === 0 && !activityLoading.value && user.value?.tag) {
+    loadActivity()
+  }
+}
+
+async function onActivityVote(post: FeedPost, isLike: boolean) {
+  try {
+    await voteActivity($api, post.id, isLike)
+    const hadLike = post.current_user_voted.liked
+    const hadDislike = post.current_user_voted.disliked
+    if (isLike) {
+      if (hadLike) {
+        post.current_user_voted.liked = false
+        post.like_count = Math.max(0, post.like_count - 1)
+      } else {
+        if (hadDislike) {
+          post.current_user_voted.disliked = false
+          post.dislike_count = Math.max(0, post.dislike_count - 1)
+        }
+        post.current_user_voted.liked = true
+        post.like_count += 1
+      }
+    } else {
+      if (hadDislike) {
+        post.current_user_voted.disliked = false
+        post.dislike_count = Math.max(0, post.dislike_count - 1)
+      } else {
+        if (hadLike) {
+          post.current_user_voted.liked = false
+          post.like_count = Math.max(0, post.like_count - 1)
+        }
+        post.current_user_voted.disliked = true
+        post.dislike_count += 1
+      }
+    }
+  } catch {
+    toast.add({ title: 'Ошибка голоса', color: 'error' })
+  }
+}
+
+async function onActivityCommentSubmit(gameId: number, text: string) {
+  try {
+    await createComment($api, gameId, text)
+    await loadActivity()
+  } catch (e) {
+    const err = e as { data?: { detail?: string } }
+    toast.add({
+      title: 'Ошибка',
+      description: err?.data?.detail ?? 'Не удалось отправить комментарий',
+      color: 'error',
+    })
+  }
+}
+
+function handleActivityIntersect(entries: IntersectionObserverEntry[]) {
+  if (!entries[0]?.isIntersecting || activityLoadingMore.value || !activityNextCursor.value) return
+  loadActivity(activityNextCursor.value)
+}
+
+let activityObserver: IntersectionObserver | null = null
 
 function openBannerEditor() {
   showBannerEditor.value = true
@@ -260,18 +400,46 @@ function onGameCreated() {
                 ? 'border-emerald-500/70 text-emerald-200'
                 : 'border-transparent text-gray-400 hover:text-gray-300'
             "
-            @click="activeSection = 'activities'"
+            @click="activeSection = 'activities'; onActivityTabClick()"
           >
             <Icon name="lucide:activity" class="size-4 shrink-0" />
             <span>Активности</span>
           </button>
         </div>
 
-        <div
-          v-if="activeSection === 'activities'"
-          class="rounded-lg border border-gray-700/50 bg-gray-800/40 p-8 text-center text-gray-500"
-        >
-          Активности (скоро)
+        <div v-if="activeSection === 'activities'" class="flex flex-col gap-6">
+          <div v-if="activityLoading" class="py-12 text-center text-gray-400">
+            Загрузка...
+          </div>
+          <template v-else>
+            <FeedPost
+              v-for="post in activityPosts"
+              :key="post.id"
+              :post="post"
+              :avatar-full-url="avatarFullUrl"
+              :format-date="formatDate"
+              :format-comment-date="formatCommentDate"
+              :on-comment-submit="onActivityCommentSubmit"
+              @vote="onActivityVote"
+            />
+            <div
+              v-if="activityLoadingMore"
+              class="py-8 text-center text-gray-400"
+            >
+              Загрузка...
+            </div>
+            <div
+              ref="activitySentinelRef"
+              class="h-4"
+              aria-hidden="true"
+            />
+            <div
+              v-if="!activityLoading && activityPosts.length === 0"
+              class="py-16 text-center text-gray-500"
+            >
+              Пока нет активностей
+            </div>
+          </template>
         </div>
 
         <template v-else>
