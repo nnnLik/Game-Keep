@@ -18,6 +18,7 @@ class UserGame(Base, IntPkMixin):
     state: Mapped[constants.game.GameStateEnum] = mapped_column(
         Enum(
             constants.game.GameStateEnum,
+            values_callable=lambda x: [e.value for e in x],
             create_constraint=True,
             native_enum=False,
         ),

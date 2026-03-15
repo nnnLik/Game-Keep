@@ -1,8 +1,13 @@
 from enum import StrEnum
 
 
+BACKLOG_GAME_STATE = 'backlog'
+IN_PROGRESS_GAME_STATE = 'in_progress'
+COMPLETED_GAME_STATE = 'completed'
+ABANDONED_GAME_STATE = 'abandoned'
+
 class GameStateEnum(StrEnum):
-    BACKLOG = 'backlog'
-    IN_PROGRESS = 'in_progress'
-    COMPLETED = 'completed'
-    ABANDONED = 'abandoned'
+    BACKLOG = BACKLOG_GAME_STATE
+    IN_PROGRESS = IN_PROGRESS_GAME_STATE
+    COMPLETED = COMPLETED_GAME_STATE
+    ABANDONED = ABANDONED_GAME_STATE

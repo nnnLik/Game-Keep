@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @dataclass
-class MyGamesService:
+class CreateGameService:
     _user_game_dao: UserGameDAO
 
     @classmethod
@@ -19,20 +19,19 @@ class MyGamesService:
     async def execute(
         self,
         user_id: UUID,
-        state: constants.game.GameStateEnum | None = None,
-        is_favorite: bool | None = None,
-    ) -> list[GameResponseDTO]:
-        games = await self._user_game_dao.get_by_user(
-            user_id,
+        name: str,
+        state: constants.game.GameStateEnum,
+        is_favorite: bool = False,
+    ) -> GameResponseDTO:
+        game = await self._user_game_dao.create(
+            user_id=user_id,
+            name=name,
             state=state,
             is_favorite=is_favorite,
         )
-        return [
-            GameResponseDTO(
-                id=g.id,
-                name=g.name,
-                state=g.state,
-                is_favorite=g.is_favorite,
-            )
-            for g in games
-        ]
+        return GameResponseDTO(
+            id=game.id,
+            name=game.name,
+            state=game.state,
+            is_favorite=game.is_favorite,
+        )

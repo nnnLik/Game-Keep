@@ -4,10 +4,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import constants.game
+from dtos.users import CreateGameRequestDTO, GameResponseDTO, MeResponseDTO
 from infra.auth import get_current_user
 from infra.db import get_db
 from models.user import User
-from dtos.users import GameResponseDTO, MeResponseDTO
+from services.users.create_game_service import CreateGameService
 from services.users.me_service import MeService
 from services.users.my_games_service import MyGamesService
 
@@ -20,6 +21,20 @@ async def me(current_user: CurrentUserDep, session: SessionDep) -> MeResponseDTO
     return await MeService.build(session).execute(current_user.id)
 
 
+@router.post('/me/games', response_model=GameResponseDTO)
+async def create_game(
+    data: CreateGameRequestDTO,
+    current_user: CurrentUserDep,
+    session: SessionDep,
+) -> GameResponseDTO:
+    return await CreateGameService.build(session).execute(
+        user_id=current_user.id,
+        name=data.name,
+        state=data.state,
+        is_favorite=data.is_favorite,
+    )
+
+
 @router.get('/me/games', response_model=list[GameResponseDTO])
 async def my_games(
     current_user: CurrentUserDep,
@@ -28,7 +43,7 @@ async def my_games(
     is_favorite: bool | None = None,
 ) -> list[GameResponseDTO]:
     return await MyGamesService.build(session).execute(
-        current_user.id,
+        user_id=current_user.id,
         state=state,
         is_favorite=is_favorite,
     )

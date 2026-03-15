@@ -2,9 +2,11 @@
 @import "@nuxt/ui";
 
 @theme {
+  --font-sans: "Sora", system-ui, sans-serif;
   --font-display: "Outfit", system-ui, sans-serif;
 }
 
-.sidebar-title {
+/* Game&Keep в сайдбаре — только Outfit, остальной текст — Sora */
+.sidebar-title h1 {
   font-family: var(--font-display);
 }

@@ -31,6 +31,10 @@ const { $api } = useNuxtApp()
 const { fetchMe, fetchMyGames } = await import('~/api/users.api')
 import type { GameResponse } from '~/api/users.api'
 
+const DRAFT_KEY = 'gametrack_create_game_draft'
+const showCreateModal = ref(false)
+const restoredDraft = ref<{ name: string; state: string; is_favorite: boolean } | null>(null)
+
 const user = ref<Awaited<ReturnType<typeof fetchMe>> | null>(null)
 const games = ref<GameResponse[]>([])
 const loading = ref(true)
@@ -78,6 +82,31 @@ function formatRegistrationDate(iso: string) {
   const month = date.toLocaleDateString('ru-RU', { month: 'long' })
   const year = date.getFullYear()
   return `${month} ${year} г.`
+}
+
+function openCreateModal() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY)
+    restoredDraft.value = raw ? JSON.parse(raw) : null
+  } catch {
+    restoredDraft.value = null
+  }
+  showCreateModal.value = true
+}
+
+function onModalDraft(draft: Partial<{ name: string; state: string; is_favorite: boolean }>) {
+  showCreateModal.value = false
+  if (draft && (draft.name || draft.state)) {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+  }
+}
+
+function onGameCreated() {
+  localStorage.removeItem(DRAFT_KEY)
+  restoredDraft.value = null
+  fetchMyGames($api).then((g) => {
+    games.value = g
+  })
 }
 </script>
 
@@ -189,6 +218,25 @@ function formatRegistrationDate(iso: string) {
           В этой категории пока нет игр
         </li>
       </ul>
+
+      <!-- FAB -->
+      <button
+        type="button"
+        class="fixed bottom-6 right-6 z-40 flex size-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg transition hover:bg-emerald-500"
+        aria-label="Добавить игру"
+        @click="openCreateModal"
+      >
+        <Icon name="lucide:plus" class="size-6" />
+      </button>
+
+      <!-- Create Game Modal -->
+      <CreateGameModal
+        :model-value="showCreateModal"
+        :initial-draft="restoredDraft"
+        @update:model-value="showCreateModal = $event"
+        @draft="onModalDraft"
+        @created="onGameCreated"
+      />
     </template>
   </div>
 </template>

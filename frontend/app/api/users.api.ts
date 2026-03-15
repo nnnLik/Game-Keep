@@ -16,6 +16,12 @@ export interface GameResponse {
   is_favorite: boolean
 }
 
+export interface CreateGamePayload {
+  name: string
+  state: string
+  is_favorite?: boolean
+}
+
 export async function fetchMe(api: ApiClient) {
   return api<MeResponse>(ApiEndpoint.Users.ME)
 }
@@ -31,4 +37,11 @@ export async function fetchMyGames(
   const query = searchParams.toString()
   const url = query ? `${ApiEndpoint.Users.ME_GAMES}?${query}` : ApiEndpoint.Users.ME_GAMES
   return api<GameResponse[]>(url)
+}
+
+export async function createGame(api: ApiClient, payload: CreateGamePayload) {
+  return api<GameResponse>(ApiEndpoint.Users.ME_GAMES, {
+    method: 'POST',
+    body: payload,
+  })
 }

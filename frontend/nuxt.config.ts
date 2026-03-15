@@ -22,6 +22,7 @@ export default defineNuxtConfig({
 
   fonts: {
     families: [
+      { name: 'Sora', provider: 'google', weights: [400, 500, 600, 700] },
       { name: 'Outfit', provider: 'google', weights: [600, 700] },
     ],
   },
