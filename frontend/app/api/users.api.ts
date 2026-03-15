@@ -140,6 +140,37 @@ export async function updateGameFavorite(
   })
 }
 
+export async function updateGame(
+  api: ApiClient,
+  gameId: number,
+  payload: CreateGamePayload
+) {
+  return api<GameResponse>(ApiEndpoint.Users.ME_GAME(gameId), {
+    method: 'PATCH',
+    body: {
+      name: payload.name,
+      image_url: payload.image_url ?? null,
+      steam_app_id: payload.steam_app_id ?? null,
+      state: payload.state,
+      is_favorite: payload.is_favorite ?? false,
+      genres: payload.genres ?? null,
+      developers: payload.developers ?? null,
+      publishers: payload.publishers ?? null,
+      release_date: payload.release_date ?? null,
+      note: payload.note ?? null,
+      date_started: payload.date_started ?? null,
+      date_finished: payload.date_finished ?? null,
+      hours_played: payload.hours_played ?? null,
+    },
+  })
+}
+
+export async function deleteGame(api: ApiClient, gameId: number) {
+  return api<void>(ApiEndpoint.Users.ME_GAME(gameId), {
+    method: 'DELETE',
+  })
+}
+
 export async function uploadBanner(api: ApiClient, file: Blob) {
   const formData = new FormData()
   formData.append('banner', file, 'banner.png')

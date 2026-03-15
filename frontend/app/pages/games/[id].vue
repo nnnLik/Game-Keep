@@ -6,7 +6,7 @@ import {
   createComment,
   voteComment,
 } from '~/api/games.api'
-import { updateGameFavorite } from '~/api/users.api'
+import { updateGameFavorite, deleteGame } from '~/api/users.api'
 import type {
   GameDetailResponse,
   CommentResponse,
@@ -32,8 +32,19 @@ const replyToId = ref<number | null>(null)
 const submitting = ref(false)
 const commentsLoading = ref(false)
 const favoriteToggling = ref(false)
+const editModalOpen = ref(false)
+const deleteConfirmOpen = ref(false)
+const deleting = ref(false)
 
 const config = useRuntimeConfig()
+const router = useRouter()
+
+const isOwnGame = computed(
+  () =>
+    !!currentUser.value?.tag &&
+    !!game.value?.owner?.tag &&
+    currentUser.value.tag === game.value.owner.tag
+)
 
 const backHref = computed(() => {
   if (!game.value?.owner?.tag) return '/'
@@ -129,6 +140,38 @@ function cancelReply() {
   replyToId.value = null
 }
 
+async function toggleFavorite() {
+  if (!game.value || !isOwnGame.value || favoriteToggling.value) return
+  favoriteToggling.value = true
+  try {
+    await updateGameFavorite($api, game.value.id, !game.value.is_favorite)
+    if (game.value) game.value.is_favorite = !game.value.is_favorite
+  } catch {
+    toast.add({ title: 'Ошибка', color: 'error' })
+  } finally {
+    favoriteToggling.value = false
+  }
+}
+
+function onEditUpdated(updated: GameDetailResponse) {
+  if (game.value) Object.assign(game.value, updated)
+  editModalOpen.value = false
+}
+
+async function onDeleteConfirm() {
+  if (!game.value || !isOwnGame.value || deleting.value) return
+  deleting.value = true
+  try {
+    await deleteGame($api, game.value.id)
+    deleteConfirmOpen.value = false
+    await router.push('/')
+  } catch {
+    toast.add({ title: 'Не удалось удалить игру', color: 'error' })
+  } finally {
+    deleting.value = false
+  }
+}
+
 onMounted(async () => {
   try {
     const [gameRes, meRes] = await Promise.allSettled([
@@ -150,6 +193,13 @@ onMounted(async () => {
     }
     if (currentUser.value) {
       await loadComments()
+    }
+    if (
+      route.query.edit === '1' &&
+      game.value &&
+      currentUser.value?.tag === game.value?.owner?.tag
+    ) {
+      editModalOpen.value = true
     }
   } catch {
     error.value = 'Не удалось загрузить игру'
@@ -241,6 +291,24 @@ onMounted(async () => {
                   name="lucide:heart"
                   class="size-4 fill-red-500 text-red-500"
                 />
+                <template v-if="isOwnGame">
+                  <button
+                    type="button"
+                    class="flex items-center justify-center text-gray-400 transition hover:text-white"
+                    aria-label="Редактировать"
+                    @click="editModalOpen = true"
+                  >
+                    <Icon name="lucide:pencil" class="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    class="flex items-center justify-center text-gray-400 transition hover:text-red-400"
+                    aria-label="Удалить"
+                    @click="deleteConfirmOpen = true"
+                  >
+                    <Icon name="lucide:trash-2" class="size-4" />
+                  </button>
+                </template>
                 <span class="flex items-center gap-1 text-sm text-gray-400">
                   <Icon name="lucide:eye" class="size-4" />
                   {{ game.view_count }} просмотров
@@ -290,32 +358,37 @@ onMounted(async () => {
         </div>
 
         <!-- Комментарии -->
-        <div class="rounded-xl border border-gray-700/50 bg-gray-800/40 p-5">
-          <h2 class="mb-4 text-lg font-medium text-white">Комментарии</h2>
-          <div v-if="!currentUser" class="py-4 text-center text-gray-400">
+        <div class="flex max-h-[800px] flex-col rounded-xl border border-gray-700/50 bg-gray-800/40 p-5">
+          <h2 class="mb-4 shrink-0 text-lg font-medium text-white">Комментарии</h2>
+          <div v-if="!currentUser" class="flex-1 overflow-y-auto py-4 text-center text-gray-400">
             Войдите, чтобы видеть и оставлять комментарии
           </div>
           <template v-else>
-            <div v-if="commentsLoading" class="py-4 text-gray-400">
-              Загрузка комментариев...
-            </div>
-            <div v-else class="space-y-4">
-              <GameCommentItem
-                v-for="c in comments"
-                :key="c.id"
-                :comment="c"
-                :depth="0"
-                :avatar-full-url="avatarFullUrl"
-                :format-comment-date="formatCommentDate"
-                @vote="onVote"
-                @reply="startReply"
-              />
-              <div v-if="comments.length === 0" class="py-4 text-center text-gray-500">
-                Пока нет комментариев
+            <div
+              class="min-h-0 flex-1 overflow-y-auto"
+              :class="{ 'flex items-center justify-center': commentsLoading }"
+            >
+              <div v-if="commentsLoading" class="py-4 text-gray-400">
+                Загрузка комментариев...
+              </div>
+              <div v-else class="space-y-4 pr-2">
+                <GameCommentItem
+                  v-for="c in comments"
+                  :key="c.id"
+                  :comment="c"
+                  :depth="0"
+                  :avatar-full-url="avatarFullUrl"
+                  :format-comment-date="formatCommentDate"
+                  @vote="onVote"
+                  @reply="startReply"
+                />
+                <div v-if="comments.length === 0" class="py-4 text-center text-gray-500">
+                  Пока нет комментариев
+                </div>
               </div>
             </div>
 
-            <div class="mt-4">
+            <div class="mt-4 shrink-0">
               <p v-if="replyToId" class="mb-2 text-sm text-gray-400">
                 Ответ на комментарий
                 <button
@@ -351,6 +424,27 @@ onMounted(async () => {
           </template>
         </div>
       </div>
+
+      <EditGameModal
+        v-model="editModalOpen"
+        :game="game"
+        @updated="onEditUpdated"
+      />
+      <UModal
+        v-model:open="deleteConfirmOpen"
+        title="Удалить игру?"
+        description="Действие необратимо. Игра будет удалена из вашей коллекции."
+        :ui="{ footer: 'justify-end' }"
+      >
+        <template #footer="{ close }">
+          <UButton color="neutral" variant="outline" @click="close()">
+            Отмена
+          </UButton>
+          <UButton color="error" :loading="deleting" @click="onDeleteConfirm">
+            Удалить
+          </UButton>
+        </template>
+      </UModal>
     </template>
   </div>
 </template>

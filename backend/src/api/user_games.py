@@ -8,7 +8,7 @@ from dtos.games import FetchSteamResponseDTO, GenreDTO
 from dtos.users import (
     CreateGameRequestDTO,
     GameResponseDTO,
-    UpdateGameFavoriteRequestDTO,
+    UpdateGameRequestDTO,
 )
 from infra.auth import get_current_user
 from infra.db import get_db
@@ -16,7 +16,8 @@ from models.user import User
 from services.games.fetch_steam_game_service import FetchSteamGameService
 from services.users.create_game_service import CreateGameService
 from services.users.my_games_service import MyGamesService
-from services.users.update_game_favorite_service import UpdateGameFavoriteService
+from services.users.delete_game_service import DeleteGameService
+from services.users.update_game_service import UpdateGameService
 
 router = APIRouter(prefix='/users/me', tags=['games'])
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
@@ -77,16 +78,17 @@ async def create_game(
 
 
 @router.patch('/games/{game_id}', response_model=GameResponseDTO)
-async def update_game_favorite(
+async def update_game(
     game_id: int,
-    data: UpdateGameFavoriteRequestDTO,
+    data: UpdateGameRequestDTO,
     current_user: CurrentUserDep,
     session: SessionDep,
 ) -> GameResponseDTO:
-    result = await UpdateGameFavoriteService.build(session).execute(
+    data_dict = data.model_dump(exclude_unset=True)
+    result = await UpdateGameService.build(session).execute(
         game_id=game_id,
         user_id=current_user.id,
-        is_favorite=data.is_favorite,
+        **data_dict,
     )
     if result is None:
         raise HTTPException(
@@ -94,6 +96,24 @@ async def update_game_favorite(
             detail='Game not found',
         )
     return result
+
+
+@router.delete('/games/{game_id}', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_game(
+    game_id: int,
+    current_user: CurrentUserDep,
+    session: SessionDep,
+) -> None:
+    try:
+        await DeleteGameService.build(session).execute(
+            game_id=game_id,
+            user_id=current_user.id,
+        )
+    except DeleteGameService.GameNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Game not found',
+        )
 
 
 @router.get('/games', response_model=list[GameResponseDTO])

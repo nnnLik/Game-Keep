@@ -10,6 +10,54 @@ class UpdateGameFavoriteRequestDTO(BaseModel):
     is_favorite: bool
 
 
+class UpdateGameRequestDTO(BaseModel):
+    name: str | None = None
+    image_url: str | None = None
+    steam_app_id: str | None = None
+    state: str | None = None
+    is_favorite: bool | None = None
+    genres: list[dict[str, str]] | None = None
+    developers: list[str] | None = None
+    publishers: list[str] | None = None
+    release_date: str | None = None
+    note: str | None = None
+    date_started: date | None = None
+    date_finished: date | None = None
+    hours_played: float | None = None
+
+    @field_validator('name')
+    @classmethod
+    def name_not_empty(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        if not v.strip():
+            raise ValueError('Name is required')
+        return v.strip()
+
+    @field_validator('state')
+    @classmethod
+    def state_valid(cls, v: str | None) -> str | None:
+        if v is not None and v not in {e.value for e in constants.game.GameStateEnum}:
+            raise ValueError('Invalid state')
+        return v
+
+    @field_validator('note')
+    @classmethod
+    def note_max_length(cls, v: str | None) -> str | None:
+        if v is not None and len(v) > 500:
+            raise ValueError('Note max 500 characters')
+        return v
+
+    @field_validator('hours_played')
+    @classmethod
+    def hours_played_non_negative(cls, v: float | None) -> float | None:
+        if v is None:
+            return None
+        if v != v or v < 0:
+            raise ValueError('Hours played must be >= 0')
+        return round(v, 1)
+
+
 class CreateGameRequestDTO(BaseModel):
     name: str
     image_url: str | None = None

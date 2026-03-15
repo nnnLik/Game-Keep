@@ -85,6 +85,64 @@ class UserGameDAO:
         await self._session.refresh(game)
         return game
 
+    async def update(
+        self,
+        game_id: int,
+        user_id: UUID,
+        **kwargs: object,
+    ) -> UserGame | None:
+        stmt = select(UserGame).where(
+            UserGame.id == game_id,
+            UserGame.user_id == user_id,
+        )
+        result = await self._session.execute(stmt)
+        game = result.scalar_one_or_none()
+        if game is None:
+            return None
+        if 'name' in kwargs:
+            game.name = kwargs['name']
+        if 'state' in kwargs:
+            game.state = kwargs['state']
+        if 'is_favorite' in kwargs:
+            game.is_favorite = kwargs['is_favorite']
+        if 'image_url' in kwargs:
+            game.image_url = kwargs['image_url']
+        if 'steam_app_id' in kwargs:
+            game.steam_app_id = kwargs['steam_app_id']
+        if 'genres' in kwargs:
+            game.genres = kwargs['genres'] or []
+        if 'developers' in kwargs:
+            game.developers = kwargs['developers'] or []
+        if 'publishers' in kwargs:
+            game.publishers = kwargs['publishers'] or []
+        if 'release_date' in kwargs:
+            game.release_date = kwargs['release_date']
+        if 'note' in kwargs:
+            game.note = kwargs['note']
+        if 'date_started' in kwargs:
+            game.date_started = kwargs['date_started']
+        if 'date_finished' in kwargs:
+            game.date_finished = kwargs['date_finished']
+        if 'hours_played' in kwargs:
+            h = kwargs['hours_played']
+            game.hours_played = round(h, 1) if h is not None else None
+        await self._session.flush()
+        await self._session.refresh(game)
+        return game
+
+    async def delete(self, game_id: int, user_id: UUID) -> bool:
+        stmt = select(UserGame).where(
+            UserGame.id == game_id,
+            UserGame.user_id == user_id,
+        )
+        result = await self._session.execute(stmt)
+        game = result.scalar_one_or_none()
+        if game is None:
+            return False
+        await self._session.delete(game)
+        await self._session.flush()
+        return True
+
     async def update_is_favorite(
         self, game_id: int, user_id: UUID, is_favorite: bool
     ) -> UserGame | None:

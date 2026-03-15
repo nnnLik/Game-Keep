@@ -20,7 +20,22 @@ const emit = defineEmits<{
     :class="depth === 0 ? 'bg-gray-700/50' : 'bg-gray-700/30'"
   >
     <div class="flex gap-3">
+      <NuxtLink
+        v-if="comment.author.tag"
+        :to="`/users/${comment.author.tag}`"
+        class="flex shrink-0 overflow-hidden rounded-full bg-gray-600 transition hover:ring-2 hover:ring-emerald-500/50"
+        :class="depth === 0 ? 'size-8' : 'size-6'"
+      >
+        <img
+          v-if="avatarFullUrl(comment.author.avatar_url)"
+          :src="avatarFullUrl(comment.author.avatar_url) ?? ''"
+          :alt="comment.author.username ?? ''"
+          class="size-full object-cover"
+        />
+        <Icon v-else name="lucide:user" class="m-auto text-gray-400" :class="depth === 0 ? 'size-4' : 'size-3'" />
+      </NuxtLink>
       <div
+        v-else
         class="flex shrink-0 overflow-hidden rounded-full bg-gray-600"
         :class="depth === 0 ? 'size-8' : 'size-6'"
       >
@@ -34,11 +49,16 @@ const emit = defineEmits<{
       </div>
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2" :class="depth === 0 ? 'text-sm' : 'text-xs'">
-          <span class="font-medium text-white">
+          <NuxtLink
+            v-if="comment.author.tag"
+            :to="`/users/${comment.author.tag}`"
+            class="group inline-flex items-center gap-2 font-medium text-white transition hover:text-emerald-400"
+          >
             {{ comment.author.username ?? 'Удалённый пользователь' }}
-          </span>
-          <span v-if="comment.author.tag" class="text-gray-400">
-            @{{ comment.author.tag }}
+            <span class="text-gray-400 transition group-hover:text-emerald-400">@{{ comment.author.tag }}</span>
+          </NuxtLink>
+          <span v-else class="font-medium text-white">
+            {{ comment.author.username ?? 'Удалённый пользователь' }}
           </span>
           <span class="text-gray-500">
             {{ formatCommentDate(comment.created_at) }}
