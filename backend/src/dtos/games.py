@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel
 
@@ -28,6 +28,31 @@ class GameDetailResponseDTO(BaseModel):
     hours_played: float | None = None
     view_count: int
     owner: GameOwnerDTO
+
+
+class CreateCommentRequestDTO(BaseModel):
+    text: str
+    parent_id: int | None = None
+
+
+class CommentAuthorDTO(BaseModel):
+    username: str | None
+    tag: str | None
+    avatar_url: str | None
+
+
+class CommentResponseDTO(BaseModel):
+    id: int
+    text: str
+    created_at: datetime
+    author: CommentAuthorDTO
+    like_count: int
+    dislike_count: int
+    current_user_voted: dict[str, bool]  # liked, disliked
+    children: list['CommentResponseDTO'] = []
+
+
+CommentResponseDTO.model_rebuild()
 
 
 class GenreDTO(BaseModel):
