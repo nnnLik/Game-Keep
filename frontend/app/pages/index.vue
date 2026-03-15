@@ -64,6 +64,14 @@ onMounted(async () => {
   }
 })
 
+const config = useRuntimeConfig()
+
+function avatarFullUrl(avatarUrl: string | null | undefined): string | null {
+  if (!avatarUrl) return null
+  const base = (config.public.apiBase as string) || ''
+  return `${base.replace(/\/$/, '')}/uploads/${avatarUrl}`
+}
+
 function formatRegistrationDate(iso: string) {
   const date = new Date(iso)
   const month = date.toLocaleDateString('ru-RU', { month: 'long' })
@@ -122,10 +130,16 @@ function onGameCreated() {
           aria-label="Баннер профиля"
         />
         <div
-          class="relative -mt-20 flex size-36 shrink-0 items-center justify-center self-start rounded-full border-4 border-gray-950 bg-gray-600"
+          class="relative -mt-20 flex size-36 shrink-0 items-center justify-center overflow-hidden self-start rounded-full border-4 border-gray-950 bg-gray-600"
           aria-label="Аватар"
         >
-          <Icon name="lucide:user" class="size-20 text-gray-400" />
+          <img
+            v-if="avatarFullUrl(user.avatar_url)"
+            :src="avatarFullUrl(user.avatar_url) ?? ''"
+            :alt="user.username ?? 'Аватар'"
+            class="size-full object-cover"
+          />
+          <Icon v-else name="lucide:user" class="size-20 text-gray-400" />
         </div>
         <div class="mt-4 flex flex-col gap-1">
           <div class="flex items-baseline gap-2">

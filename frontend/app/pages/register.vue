@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { register } from '~/api/auth.api'
+import { registerStart } from '~/api/auth.api'
 
 definePageMeta({
   layout: 'auth',
@@ -9,8 +9,6 @@ const config = useRuntimeConfig()
 const toast = useToast()
 
 const form = reactive({
-  username: '',
-  tag: '',
   email: '',
   password: '',
 })
@@ -26,16 +24,16 @@ function getErrorDetail(e: unknown): string {
 }
 
 async function onSubmit() {
-  if (!form.username || !form.tag || !form.email || !form.password) {
+  if (!form.email || !form.password) {
     error.value = 'Заполни все поля'
     return
   }
   error.value = ''
   loading.value = true
   try {
-    const res = await register(config.public.apiBase as string, form)
+    const res = await registerStart(config.public.apiBase as string, form)
     useAuthStore().setTokens(res.access_token, res.refresh_token)
-    await navigateTo('/')
+    window.location.href = '/complete-registration'
   } catch (e: unknown) {
     error.value = getErrorDetail(e)
     toast.add({ title: 'Ошибка', description: error.value, color: 'error' })
@@ -53,22 +51,6 @@ async function onSubmit() {
     </div>
 
     <UForm @submit="onSubmit" class="space-y-4 w-full">
-      <UInput
-        v-model="form.username"
-        placeholder="Имя пользователя (мин. 5 символов)"
-        autocomplete="username"
-        size="lg"
-        class="w-full"
-        :disabled="loading"
-      />
-      <UInput
-        v-model="form.tag"
-        placeholder="Тег (3–15 символов, a-z 0-9)"
-        autocomplete="off"
-        size="lg"
-        class="w-full"
-        :disabled="loading"
-      />
       <UInput
         v-model="form.email"
         type="email"
@@ -93,7 +75,7 @@ async function onSubmit() {
         size="lg"
         :loading="loading"
       >
-        Зарегистрироваться
+        Далее
       </UButton>
     </UForm>
 

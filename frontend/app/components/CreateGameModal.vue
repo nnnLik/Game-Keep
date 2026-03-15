@@ -5,6 +5,7 @@ import {
   GAME_NAME_PLACEHOLDER,
   IMAGE_URL_PLACEHOLDER,
   STEAM_APP_URL_REGEX,
+  STEAM_URL_OPTIONAL_LABEL,
   STEAM_URL_PLACEHOLDER,
   TABS,
   V_MODEL_UPDATE,
@@ -106,7 +107,8 @@ function handleEscape(e: KeyboardEvent) {
 async function goToStep2() {
   const url = steamUrl.value.trim()
   if (!url) {
-    error.value = CreateGameErrors.STEAM_URL_REQUIRED
+    step.value = 2
+    error.value = null
     return
   }
   if (!isValidSteamAppUrl(url)) {
@@ -132,8 +134,18 @@ async function goToStep2() {
   }
 }
 
+function goToStep3() {
+  const name = form.name.trim()
+  if (!name) {
+    error.value = CreateGameErrors.NAME_REQUIRED
+    return
+  }
+  error.value = null
+  step.value = 3
+}
+
 function goBack() {
-  step.value = 1
+  step.value = step.value === 3 ? 2 : 1
   error.value = null
 }
 
@@ -216,13 +228,25 @@ onUnmounted(() => {
           >
             <Icon name="lucide:gamepad-2" class="size-4" />
           </div>
+          <div
+            class="h-1 flex-1 rounded-full transition-colors"
+            :class="step >= 3 ? 'bg-emerald-600' : 'bg-gray-700'"
+          />
+          <div
+            class="flex size-9 shrink-0 items-center justify-center rounded-full transition-colors"
+            :class="
+              step >= 3 ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-400'
+            "
+          >
+            <Icon name="lucide:star" class="size-4" />
+          </div>
         </div>
 
-        <!-- Шаг 1: Ссылка Steam -->
+        <!-- Шаг 1: Ссылка Steam (опционально) -->
         <div v-if="step === 1" class="flex flex-col gap-4">
           <div>
             <label for="steam-url" class="mb-1 block text-sm text-gray-400">
-              Ссылка на игру в Steam
+              Ссылка на игру в Steam {{ STEAM_URL_OPTIONAL_LABEL }}
             </label>
             <input
               id="steam-url"
@@ -244,6 +268,13 @@ onUnmounted(() => {
             </button>
             <button
               type="button"
+              class="rounded-lg px-4 py-2 text-gray-300 hover:text-white"
+              @click="goToStep2"
+            >
+              Пропустить
+            </button>
+            <button
+              type="button"
               :disabled="fetching"
               class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
               @click="goToStep2"
@@ -254,7 +285,11 @@ onUnmounted(() => {
         </div>
 
         <!-- Шаг 2: Форма (карточки) -->
-        <form v-else class="flex flex-col gap-4" @submit.prevent="submit">
+        <form
+          v-else-if="step === 2"
+          class="flex flex-col gap-4"
+          @submit.prevent="goToStep3"
+        >
           <!-- Карточка: Картинка -->
           <div class="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
             <h3 class="mb-3 text-sm font-medium text-gray-300">Картинка</h3>
@@ -349,7 +384,33 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Карточка: Оценка (заглушка) -->
+          <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              class="rounded-lg px-4 py-2 text-gray-400 hover:text-white"
+              @click="goBack"
+            >
+              Назад
+            </button>
+            <button
+              type="button"
+              class="rounded-lg px-4 py-2 text-gray-400 hover:text-white"
+              @click="closeWithDraft"
+            >
+              Отмена
+            </button>
+            <button
+              type="submit"
+              class="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-500"
+            >
+              Далее
+            </button>
+          </div>
+        </form>
+
+        <!-- Шаг 3: Оценка -->
+        <form v-else-if="step === 3" class="flex flex-col gap-4" @submit.prevent="submit">
           <div class="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
             <h3 class="mb-3 text-sm font-medium text-gray-300">Оценка</h3>
             <p class="text-xs text-gray-500">Скоро</p>

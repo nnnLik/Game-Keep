@@ -1,5 +1,13 @@
 import { ApiEndpoint } from '~/constants/api'
 
+export async function registerStart(baseURL: string, payload: RegisterStartPayload) {
+  return $fetch<TokenResponse>(ApiEndpoint.Auth.REGISTER_START, {
+    baseURL,
+    method: 'POST',
+    body: payload,
+  })
+}
+
 export interface TokenResponse {
   access_token: string
   refresh_token: string
@@ -13,6 +21,11 @@ export interface LoginPayload {
 export interface RegisterPayload {
   username: string
   tag: string
+  email: string
+  password: string
+}
+
+export interface RegisterStartPayload {
   email: string
   password: string
 }
@@ -48,5 +61,21 @@ export async function register(baseURL: string, payload: RegisterPayload) {
     baseURL,
     method: 'POST',
     body: payload,
+  })
+}
+
+export async function completeRegistration(
+  api: import('./base.client').ApiClient,
+  payload: { username: string; tag: string; avatar?: File }
+) {
+  const formData = new FormData()
+  formData.append('username', payload.username)
+  formData.append('tag', payload.tag)
+  if (payload.avatar) {
+    formData.append('avatar', payload.avatar)
+  }
+  return api<{ ok: boolean }>(ApiEndpoint.Auth.COMPLETE_REGISTRATION, {
+    method: 'POST',
+    body: formData,
   })
 }

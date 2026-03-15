@@ -45,8 +45,41 @@ class UserDAO:
             tag=tag.strip().lower(),
             email=email,
             password=password_hash,
+            is_registration_complete=True,
         )
         self._session.add(user)
+        await self._session.flush()
+        await self._session.refresh(user)
+        return user
+
+    async def create_minimal(self, email: str, password_hash: str) -> User:
+        user = User(
+            username=None,
+            tag=None,
+            email=email,
+            password=password_hash,
+            is_registration_complete=False,
+        )
+        self._session.add(user)
+        await self._session.flush()
+        await self._session.refresh(user)
+        return user
+
+    async def update_profile(
+        self,
+        user_id: UUID,
+        username: str,
+        tag: str,
+        avatar_url: str | None = None,
+    ) -> User | None:
+        user = await self.get_by_id(user_id)
+        if not user:
+            return None
+        user.username = username
+        user.tag = tag.strip().lower()
+        if avatar_url is not None:
+            user.avatar_url = avatar_url
+        user.is_registration_complete = True
         await self._session.flush()
         await self._session.refresh(user)
         return user

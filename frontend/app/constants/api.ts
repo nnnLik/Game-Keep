@@ -2,6 +2,8 @@ export const ApiEndpoint = {
   Auth: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
+    REGISTER_START: '/auth/register-start',
+    COMPLETE_REGISTRATION: '/auth/complete-registration',
     REFRESH: '/auth/refresh',
   },
   Users: {

@@ -23,9 +23,11 @@ export function isValidSteamAppUrl(url: string): boolean {
 export const STEAM_URL_PLACEHOLDER =
   'https://store.steampowered.com/app/...' as const
 
+/** Подпись для опционального поля Steam */
+export const STEAM_URL_OPTIONAL_LABEL = '(опционально)' as const
+
 /** Сообщения об ошибках */
 export const CreateGameErrors = {
-  STEAM_URL_REQUIRED: 'Введите ссылку на игру в Steam',
   STEAM_URL_INVALID:
     'Некорректная ссылка. Нужен формат: store.steampowered.com/app/123',
   FETCH_FAILED: 'Не удалось загрузить данные',

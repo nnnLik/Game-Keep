@@ -12,6 +12,7 @@ class AppSettings(BaseSettings):
     PORT: int = Field(9999, alias='PORT')
     RELOAD: bool = Field(True, alias='RELOAD')
     LOG_LEVEL: str = Field('info', alias='LOG_LEVEL')
+    UPLOADS_DIR: str = Field('uploads', alias='UPLOADS_DIR')
 
 
 class DBSettings(BaseSettings):

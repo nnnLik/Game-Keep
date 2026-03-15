@@ -35,6 +35,10 @@ export default defineNuxtConfig({
   imports: {
     dirs: ['api'],
   },
+  routeRules: {
+    '/register/complete': { redirect: '/complete-registration' },
+  },
+
   runtimeConfig: {
     public: {
       apiBase: 'http://localhost:9999',

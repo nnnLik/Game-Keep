@@ -3,10 +3,12 @@ import { ApiEndpoint } from '~/constants'
 
 export interface MeResponse {
   id: string
-  username: string
-  tag: string
+  username: string | null
+  tag: string | null
   email: string
   created_at: string
+  is_registration_complete: boolean
+  avatar_url: string | null
 }
 
 export interface GameResponse {

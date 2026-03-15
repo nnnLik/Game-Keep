@@ -30,10 +30,12 @@ class CreateGameRequestDTO(BaseModel):
 
 class MeResponseDTO(BaseModel):
     id: UUID
-    username: str
-    tag: str
+    username: str | None
+    tag: str | None
     email: str
     created_at: datetime
+    is_registration_complete: bool
+    avatar_url: str | None
 
 
 class GameResponseDTO(BaseModel):
