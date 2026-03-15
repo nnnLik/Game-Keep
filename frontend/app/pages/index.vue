@@ -275,30 +275,34 @@ function onGameCreated() {
         <li
           v-for="game in filteredGames"
           :key="game.id"
-          class="flex items-center gap-4 rounded-lg bg-gray-800/50 px-4 py-3 transition-colors hover:bg-gray-800"
         >
-          <div
-            class="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded bg-gray-600"
-            aria-hidden
+          <NuxtLink
+            :to="`/games/${game.id}`"
+            class="flex items-center gap-4 rounded-lg bg-gray-800/50 px-4 py-3 transition-colors hover:bg-gray-800"
           >
-            <img
-              v-if="game.image_url"
-              :src="game.image_url"
-              :alt="game.name"
-              class="h-full w-full object-cover"
-            />
+            <div
+              class="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded bg-gray-600"
+              aria-hidden
+            >
+              <img
+                v-if="game.image_url"
+                :src="game.image_url"
+                :alt="game.name"
+                class="h-full w-full object-cover"
+              />
+              <Icon
+                v-else
+                name="lucide:gamepad-2"
+                class="size-7 text-gray-400"
+              />
+            </div>
+            <span class="font-medium text-white">{{ game.name }}</span>
             <Icon
-              v-else
-              name="lucide:gamepad-2"
-              class="size-7 text-gray-400"
+              v-if="game.is_favorite"
+              name="lucide:heart"
+              class="ml-auto size-4 shrink-0 fill-red-500 text-red-500"
             />
-          </div>
-          <span class="font-medium text-white">{{ game.name }}</span>
-          <Icon
-            v-if="game.is_favorite"
-            name="lucide:heart"
-            class="ml-auto size-4 shrink-0 fill-red-500 text-red-500"
-          />
+          </NuxtLink>
         </li>
         <li
           v-if="filteredGames.length === 0"
