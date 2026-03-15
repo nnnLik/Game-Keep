@@ -8,6 +8,8 @@ import constants.game
 
 class CreateGameRequestDTO(BaseModel):
     name: str
+    image_url: str | None = None
+    steam_app_id: str | None = None
     state: str
     is_favorite: bool = False
 
@@ -37,5 +39,7 @@ class MeResponseDTO(BaseModel):
 class GameResponseDTO(BaseModel):
     id: int
     name: str
+    image_url: str | None
+    steam_app_id: str | None
     state: constants.game.GameStateEnum
     is_favorite: bool

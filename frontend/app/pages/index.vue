@@ -1,27 +1,12 @@
 <script setup lang="ts">
-import { TABS } from '~/constants/profile'
-
-const TAB_ACTIVE_CLASSES: Record<string, string> = {
-  slate: 'border-slate-500/70 text-slate-300',
-  emerald: 'border-emerald-500/70 text-emerald-200',
-  teal: 'border-teal-500/70 text-teal-200',
-  amber: 'border-amber-500/70 text-amber-200',
-  rose: 'border-rose-500/70 text-rose-200',
-}
-const TAB_ICON_CLASSES: Record<string, string> = {
-  slate: 'text-slate-400',
-  emerald: 'text-emerald-400',
-  teal: 'text-teal-400',
-  amber: 'text-amber-400',
-  rose: 'text-rose-400',
-}
-const TAB_BADGE_CLASSES: Record<string, string> = {
-  slate: 'bg-slate-500/25 text-slate-300',
-  emerald: 'bg-emerald-500/25 text-emerald-300',
-  teal: 'bg-teal-500/25 text-teal-300',
-  amber: 'bg-amber-500/25 text-amber-300',
-  rose: 'bg-rose-500/25 text-rose-300',
-}
+import {
+  CREATE_GAME_DRAFT_KEY,
+  DEFAULT_GAME_STATE,
+  TAB_ACTIVE_CLASSES,
+  TAB_BADGE_CLASSES,
+  TAB_ICON_CLASSES,
+  TABS,
+} from '~/constants'
 
 definePageMeta({
   layout: 'default',
@@ -29,11 +14,13 @@ definePageMeta({
 
 const { $api } = useNuxtApp()
 const { fetchMe, fetchMyGames } = await import('~/api/users.api')
-import type { GameResponse } from '~/api/users.api'
+import type { CreateGamePayload, GameResponse } from '~/api/users.api'
 
-const DRAFT_KEY = 'gametrack_create_game_draft'
 const showCreateModal = ref(false)
-const restoredDraft = ref<{ name: string; state: string; is_favorite: boolean } | null>(null)
+const restoredDraft = ref<
+  Partial<CreateGamePayload> & { steam_url?: string; step?: number }
+  | null
+>(null)
 
 const user = ref<Awaited<ReturnType<typeof fetchMe>> | null>(null)
 const games = ref<GameResponse[]>([])
@@ -42,7 +29,7 @@ const gamesLoading = ref(true)
 const error = ref<string | null>(null)
 
 type TabId = (typeof TABS)[number]['id']
-const activeTab = ref<TabId>('backlog')
+const activeTab = ref<TabId>(DEFAULT_GAME_STATE)
 
 const filteredGames = computed(() => {
   if (activeTab.value === 'favorites') {
@@ -86,7 +73,7 @@ function formatRegistrationDate(iso: string) {
 
 function openCreateModal() {
   try {
-    const raw = localStorage.getItem(DRAFT_KEY)
+    const raw = localStorage.getItem(CREATE_GAME_DRAFT_KEY)
     restoredDraft.value = raw ? JSON.parse(raw) : null
   } catch {
     restoredDraft.value = null
@@ -94,15 +81,20 @@ function openCreateModal() {
   showCreateModal.value = true
 }
 
-function onModalDraft(draft: Partial<{ name: string; state: string; is_favorite: boolean }>) {
+function onModalDraft(
+  draft: Partial<CreateGamePayload> & { steam_url?: string; step?: number }
+) {
   showCreateModal.value = false
-  if (draft && (draft.name || draft.state)) {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+  if (
+    draft &&
+    (draft.steam_url || draft.steam_app_id || draft.name || draft.image_url)
+  ) {
+    localStorage.setItem(CREATE_GAME_DRAFT_KEY, JSON.stringify(draft))
   }
 }
 
 function onGameCreated() {
-  localStorage.removeItem(DRAFT_KEY)
+  localStorage.removeItem(CREATE_GAME_DRAFT_KEY)
   restoredDraft.value = null
   fetchMyGames($api).then((g) => {
     games.value = g
@@ -197,12 +189,21 @@ function onGameCreated() {
           :key="game.id"
           class="flex items-center gap-4 rounded-lg bg-gray-800/50 px-4 py-3 transition-colors hover:bg-gray-800"
         >
-          <!-- Мок картинки -->
           <div
             class="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded bg-gray-600"
             aria-hidden
           >
-            <Icon name="lucide:gamepad-2" class="size-7 text-gray-400" />
+            <img
+              v-if="game.image_url"
+              :src="game.image_url"
+              :alt="game.name"
+              class="h-full w-full object-cover"
+            />
+            <Icon
+              v-else
+              name="lucide:gamepad-2"
+              class="size-7 text-gray-400"
+            />
           </div>
           <span class="font-medium text-white">{{ game.name }}</span>
           <Icon

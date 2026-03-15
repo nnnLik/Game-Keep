@@ -1,5 +1,5 @@
 import type { ApiClient } from './base.client'
-import { ApiEndpoint } from '~/constants/api'
+import { ApiEndpoint } from '~/constants'
 
 export interface MeResponse {
   id: string
@@ -12,12 +12,22 @@ export interface MeResponse {
 export interface GameResponse {
   id: number
   name: string
+  image_url: string | null
+  steam_app_id: string | null
   state: string
   is_favorite: boolean
 }
 
+export interface FetchSteamResponse {
+  name: string
+  image_url: string | null
+  steam_app_id: string
+}
+
 export interface CreateGamePayload {
   name: string
+  image_url?: string | null
+  steam_app_id?: string | null
   state: string
   is_favorite?: boolean
 }
@@ -37,6 +47,13 @@ export async function fetchMyGames(
   const query = searchParams.toString()
   const url = query ? `${ApiEndpoint.Users.ME_GAMES}?${query}` : ApiEndpoint.Users.ME_GAMES
   return api<GameResponse[]>(url)
+}
+
+export async function fetchSteamGame(api: ApiClient, steamUrl: string) {
+  return api<FetchSteamResponse>(ApiEndpoint.Users.ME_GAMES_FETCH_STEAM, {
+    method: 'POST',
+    body: { steam_url: steamUrl },
+  })
 }
 
 export async function createGame(api: ApiClient, payload: CreateGamePayload) {

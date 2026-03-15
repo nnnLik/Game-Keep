@@ -15,6 +15,8 @@ class UserGame(Base, IntPkMixin):
         index=True,
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    image_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    steam_app_id: Mapped[str | None] = mapped_column(String(20), nullable=True)
     state: Mapped[constants.game.GameStateEnum] = mapped_column(
         Enum(
             constants.game.GameStateEnum,

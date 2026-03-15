@@ -31,6 +31,8 @@ class MyGamesService:
             GameResponseDTO(
                 id=g.id,
                 name=g.name,
+                image_url=g.image_url,
+                steam_app_id=g.steam_app_id,
                 state=g.state,
                 is_favorite=g.is_favorite,
             )

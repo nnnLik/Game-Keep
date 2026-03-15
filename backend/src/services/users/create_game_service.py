@@ -22,16 +22,22 @@ class CreateGameService:
         name: str,
         state: constants.game.GameStateEnum,
         is_favorite: bool = False,
+        image_url: str | None = None,
+        steam_app_id: str | None = None,
     ) -> GameResponseDTO:
         game = await self._user_game_dao.create(
             user_id=user_id,
             name=name,
             state=state,
             is_favorite=is_favorite,
+            image_url=image_url,
+            steam_app_id=steam_app_id,
         )
         return GameResponseDTO(
             id=game.id,
             name=game.name,
+            image_url=game.image_url,
+            steam_app_id=game.steam_app_id,
             state=game.state,
             is_favorite=game.is_favorite,
         )

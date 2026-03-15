@@ -38,13 +38,16 @@ class UserGameDAO:
         name: str,
         state: constants.game.GameStateEnum,
         is_favorite: bool = False,
+        image_url: str | None = None,
+        steam_app_id: str | None = None,
     ) -> UserGame:
-
         game = UserGame(
             user_id=user_id,
             name=name,
             state=state,
             is_favorite=is_favorite,
+            image_url=image_url,
+            steam_app_id=steam_app_id,
         )
         self._session.add(game)
         await self._session.flush()
