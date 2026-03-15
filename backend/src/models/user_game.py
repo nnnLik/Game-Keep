@@ -37,5 +37,6 @@ class UserGame(Base, IntPkMixin):
         nullable=False,
     )
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    view_count: Mapped[int] = mapped_column(default=0, nullable=False)
 
     user = relationship('User', back_populates='games')

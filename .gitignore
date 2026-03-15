@@ -32,6 +32,9 @@ node_modules
 logs
 *.log
 
+# Git worktrees
+.worktrees
+
 # Misc
 .DS_Store
 .fleet
