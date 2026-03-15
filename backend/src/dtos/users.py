@@ -78,3 +78,12 @@ class GameResponseDTO(BaseModel):
     date_started: date | None = None
     date_finished: date | None = None
     hours_played: float | None = None
+
+
+class ProfileByTagResponseDTO(BaseModel):
+    username: str | None
+    tag: str | None
+    avatar_url: str | None
+    banner_url: str | None
+    created_at: str | None
+    games: list[GameResponseDTO]

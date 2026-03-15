@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from typing import Self
 from uuid import UUID
 
 from daos.games.game_comment_dao import GameCommentDAO
@@ -5,20 +7,28 @@ from daos.games.user_game_dao import UserGameDAO
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+@dataclass
 class CreateCommentService:
-    def __init__(
-        self,
-        comment_dao: GameCommentDAO,
-        game_dao: UserGameDAO,
-    ) -> None:
-        self._comment_dao = comment_dao
-        self._game_dao = game_dao
+    _comment_dao: GameCommentDAO
+    _game_dao: UserGameDAO
+
+    class CreateCommentServiceError(Exception):
+        pass
+
+    class GameNotFoundError(CreateCommentServiceError):
+        pass
+
+    class InvalidTextError(CreateCommentServiceError):
+        pass
+
+    class InvalidParentError(CreateCommentServiceError):
+        pass
 
     @classmethod
-    def build(cls, session: AsyncSession) -> 'CreateCommentService':
+    def build(cls, session: AsyncSession) -> Self:
         return cls(
-            comment_dao=GameCommentDAO.build(session),
-            game_dao=UserGameDAO.build(session),
+            _comment_dao=GameCommentDAO.build(session),
+            _game_dao=UserGameDAO.build(session),
         )
 
     async def execute(
@@ -27,20 +37,19 @@ class CreateCommentService:
         user_id: UUID,
         text: str,
         parent_id: int | None = None,
-    ) -> tuple[int | None, str | None]:
-        """Returns (comment_id, error). error is 'not_found' or 'bad_request' or None."""
+    ) -> int:
         game = await self._game_dao.get_by_id(game_id)
         if not game:
-            return (None, 'not_found')
+            raise self.GameNotFoundError
 
         text_stripped = text.strip()
         if not text_stripped or len(text_stripped) > 200:
-            return (None, 'bad_request')
+            raise self.InvalidTextError
 
         if parent_id is not None:
             parent = await self._comment_dao.get_by_id(parent_id)
             if not parent or parent.game_id != game_id:
-                return (None, 'bad_request')
+                raise self.InvalidParentError
 
         comment = await self._comment_dao.create(
             game_id=game_id,
@@ -48,4 +57,4 @@ class CreateCommentService:
             text=text_stripped,
             parent_id=parent_id,
         )
-        return (comment.id, None)
+        return comment.id

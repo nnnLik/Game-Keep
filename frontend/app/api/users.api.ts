@@ -60,8 +60,21 @@ export interface CreateGamePayload {
   hours_played?: number | null
 }
 
+export interface ProfileByTagResponse {
+  username: string | null
+  tag: string | null
+  avatar_url: string | null
+  banner_url: string | null
+  created_at: string | null
+  games: GameResponse[]
+}
+
 export async function fetchMe(api: ApiClient) {
   return api<MeResponse>(ApiEndpoint.Users.ME)
+}
+
+export async function fetchProfileByTag(api: ApiClient, tag: string) {
+  return api<ProfileByTagResponse>(ApiEndpoint.Users.BY_TAG(tag))
 }
 
 export async function fetchMyGames(

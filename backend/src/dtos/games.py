@@ -30,6 +30,10 @@ class GameDetailResponseDTO(BaseModel):
     owner: GameOwnerDTO
 
 
+class VoteRequestDTO(BaseModel):
+    is_like: bool
+
+
 class CreateCommentRequestDTO(BaseModel):
     text: str
     parent_id: int | None = None
