@@ -1,4 +1,28 @@
 <script setup lang="ts">
+import { TABS } from '~/constants/profile'
+
+const TAB_ACTIVE_CLASSES: Record<string, string> = {
+  slate: 'border-slate-500/70 text-slate-300',
+  emerald: 'border-emerald-500/70 text-emerald-200',
+  teal: 'border-teal-500/70 text-teal-200',
+  amber: 'border-amber-500/70 text-amber-200',
+  rose: 'border-rose-500/70 text-rose-200',
+}
+const TAB_ICON_CLASSES: Record<string, string> = {
+  slate: 'text-slate-400',
+  emerald: 'text-emerald-400',
+  teal: 'text-teal-400',
+  amber: 'text-amber-400',
+  rose: 'text-rose-400',
+}
+const TAB_BADGE_CLASSES: Record<string, string> = {
+  slate: 'bg-slate-500/25 text-slate-300',
+  emerald: 'bg-emerald-500/25 text-emerald-300',
+  teal: 'bg-teal-500/25 text-teal-300',
+  amber: 'bg-amber-500/25 text-amber-300',
+  rose: 'bg-rose-500/25 text-rose-300',
+}
+
 definePageMeta({
   layout: 'default',
 })
@@ -12,14 +36,6 @@ const games = ref<GameResponse[]>([])
 const loading = ref(true)
 const gamesLoading = ref(true)
 const error = ref<string | null>(null)
-
-const TABS = [
-  { id: 'backlog', label: 'В планах', icon: 'lucide:cloud' },
-  { id: 'in_progress', label: 'Играю', icon: 'lucide:gamepad-2' },
-  { id: 'completed', label: 'Пройдено', icon: 'lucide:flag' },
-  { id: 'abandoned', label: 'Брошено', icon: 'lucide:x-circle' },
-  { id: 'favorites', label: 'Избранное', icon: 'lucide:heart' },
-] as const
 
 type TabId = (typeof TABS)[number]['id']
 const activeTab = ref<TabId>('backlog')
@@ -67,6 +83,14 @@ function formatRegistrationDate(iso: string) {
 
 <template>
   <div>
+    <!-- Tailwind: force inclusion of dynamic tab classes -->
+    <div class="sr-only" aria-hidden="true">
+      <span class="border-slate-500/70 text-slate-300" /><span class="text-slate-400 bg-slate-500/25" />
+      <span class="border-emerald-500/70 text-emerald-200" /><span class="text-emerald-400 bg-emerald-500/25" />
+      <span class="border-teal-500/70 text-teal-200" /><span class="text-teal-400 bg-teal-500/25" />
+      <span class="border-amber-500/70 text-amber-200" /><span class="text-amber-400 bg-amber-500/25" />
+      <span class="border-rose-500/70 text-rose-200" /><span class="text-rose-400 bg-rose-500/25" />
+    </div>
     <div v-if="loading" class="text-gray-400">Загрузка...</div>
     <div v-else-if="error" class="text-red-400">{{ error }}</div>
     <template v-else-if="user">
@@ -108,19 +132,27 @@ function formatRegistrationDate(iso: string) {
             type="button"
             role="tab"
             :aria-selected="activeTab === tab.id"
-            class="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+            class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors"
             :class="
               activeTab === tab.id
-                ? 'border-b-2 border-red-500 text-white'
-                : 'text-gray-400 hover:text-gray-300'
+                ? TAB_ACTIVE_CLASSES[tab.colorKey]
+                : 'border-transparent text-gray-400 hover:text-gray-300'
             "
             @click="activeTab = tab.id"
           >
-            <Icon :name="tab.icon" class="size-4 shrink-0" />
+            <Icon
+              :name="tab.icon"
+              class="size-4 shrink-0"
+              :class="activeTab === tab.id ? TAB_ICON_CLASSES[tab.colorKey] : ''"
+            />
             <span>{{ tab.label }}</span>
             <span
-              class="rounded-full bg-gray-700 px-2 py-0.5 text-xs"
-              :class="activeTab === tab.id ? 'bg-gray-600' : ''"
+              class="rounded-full px-2 py-0.5 text-xs"
+              :class="
+                activeTab === tab.id
+                  ? TAB_BADGE_CLASSES[tab.colorKey]
+                  : 'bg-gray-700/80 text-gray-400'
+              "
             >
               {{ tabCounts[tab.id] }}
             </span>
