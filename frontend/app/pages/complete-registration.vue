@@ -60,6 +60,7 @@ async function onSubmit() {
       tag: form.tag.trim(),
       avatar: avatarFile.value ?? undefined,
     })
+    useAvatarChange().emitAvatarChange()
     toast.add({ title: 'Готово', description: 'Профиль создан', color: 'success' })
     await router.push('/')
   } catch (e: unknown) {

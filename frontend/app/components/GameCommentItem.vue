@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import type { CommentResponse } from '~/api/games.api'
 
-defineProps<{
-  comment: CommentResponse
-  depth: number
-  avatarFullUrl: (url: string | null | undefined) => string | null
-  formatCommentDate: (iso: string) => string
-}>()
+const props = withDefaults(
+  defineProps<{
+    comment: CommentResponse
+    depth: number
+    avatarFullUrl: (url: string | null | undefined) => string | null
+    formatCommentDate: (iso: string) => string
+    gameId?: number
+    maxDepth?: number
+  }>(),
+  { maxDepth: 99 }
+)
 
 const emit = defineEmits<{
   vote: [comment: CommentResponse, isLike: boolean]
@@ -122,7 +127,18 @@ const emit = defineEmits<{
           </button>
         </div>
         <div
-          v-if="comment.children.length"
+          v-if="props.gameId != null && props.depth >= props.maxDepth - 1 && comment.children.length"
+          class="mt-2"
+        >
+          <NuxtLink
+            :to="`/games/${props.gameId}`"
+            class="inline-block text-sm text-emerald-400 hover:text-emerald-300"
+          >
+            Показать ещё ({{ comment.children.length }})
+          </NuxtLink>
+        </div>
+        <div
+          v-else-if="comment.children.length"
           class="mt-3 space-y-3 border-l-2 border-gray-600 pl-4"
         >
           <GameCommentItem
@@ -132,6 +148,8 @@ const emit = defineEmits<{
             :depth="depth + 1"
             :avatar-full-url="avatarFullUrl"
             :format-comment-date="formatCommentDate"
+            :game-id="props.gameId"
+            :max-depth="props.maxDepth"
             @vote="(c, like) => emit('vote', c, like)"
             @reply="(id) => emit('reply', id)"
           />

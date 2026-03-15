@@ -172,6 +172,15 @@ async function onDeleteConfirm() {
   }
 }
 
+const { avatarVersion } = useAvatarChange()
+watch(avatarVersion, async () => {
+  if (currentUser.value) {
+    try {
+      currentUser.value = await fetchMe($api)
+    } catch {}
+  }
+})
+
 onMounted(async () => {
   try {
     const [gameRes, meRes] = await Promise.allSettled([

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { FeedPost } from '~/api/feed.api'
-import type { CommentResponse } from '~/api/games.api'
 import { TABS } from '~/constants'
 
 const props = defineProps<{
@@ -8,33 +7,53 @@ const props = defineProps<{
   avatarFullUrl: (url: string | null | undefined) => string | null
   formatDate: (iso: string) => string
   formatCommentDate: (iso: string) => string
-  onCommentSubmit?: (gameId: number, text: string) => Promise<void>
+  onCommentSubmit?: (gameId: number, text: string, parentId?: number | null) => Promise<void>
+  onCommentVote?: (gameId: number, commentId: number, isLike: boolean) => Promise<void>
 }>()
 
 const emit = defineEmits<{
   vote: [post: FeedPost, isLike: boolean]
-  commentSubmit: [gameId: number, text: string]
-  loadMoreComments: [gameId: number]
+  commentSubmit: [gameId: number, text: string, parentId?: number | null]
 }>()
 
+const commentsExpanded = ref(false)
 const newCommentText = ref('')
+const replyToId = ref<number | null>(null)
 const submitting = ref(false)
 
-async function submitComment() {
+function commentCount(): number {
+  return props.post.comments_total ?? props.post.comments?.length ?? 0
+}
+
+async function submitComment(parentId?: number | null) {
   const text = newCommentText.value.trim()
   if (!text || submitting.value) return
   submitting.value = true
   try {
     if (props.onCommentSubmit) {
-      await props.onCommentSubmit(props.post.game.id, text)
+      await props.onCommentSubmit(props.post.game.id, text, parentId)
       newCommentText.value = ''
+      replyToId.value = null
     } else {
-      emit('commentSubmit', props.post.game.id, text)
+      emit('commentSubmit', props.post.game.id, text, parentId)
       newCommentText.value = ''
+      replyToId.value = null
     }
   } finally {
     submitting.value = false
   }
+}
+
+function startReply(id: number) {
+  replyToId.value = id
+}
+
+function cancelReply() {
+  replyToId.value = null
+}
+
+function onVote(commentId: number, isLike: boolean) {
+  props.onCommentVote?.(props.post.game.id, commentId, isLike)
 }
 
 function stateLabel(stateId: string): string {
@@ -131,61 +150,8 @@ function stateLabel(stateId: string): string {
       </NuxtLink>
     </div>
 
-    <!-- Comments preview for game_created -->
-    <div
-      v-if="post.action_type === 'game_created' && (post.comments?.length || post.comments_total)"
-      class="border-t border-gray-700/50 p-4"
-    >
-      <div class="space-y-3">
-        <GameCommentItem
-          v-for="c in post.comments"
-          :key="c.id"
-          :comment="c"
-          :depth="0"
-          :avatar-full-url="avatarFullUrl"
-          :format-comment-date="formatCommentDate"
-          @vote="() => {}"
-          @reply="() => {}"
-        />
-        <NuxtLink
-          v-if="post.comments_total != null && post.comments_total > (post.comments?.length ?? 0)"
-          :to="`/games/${post.game.id}`"
-          class="inline-block text-sm text-emerald-400 hover:text-emerald-300"
-        >
-          Показать ещё ({{ post.comments_total - (post.comments?.length ?? 0) }})
-        </NuxtLink>
-      </div>
-    </div>
-
-    <!-- Comment form for game_created -->
-    <div
-      v-if="post.action_type === 'game_created'"
-      class="border-t border-gray-700/50 p-4"
-    >
-      <div class="flex flex-col gap-2">
-        <textarea
-          v-model="newCommentText"
-          placeholder="Написать комментарий (макс. 200 символов)"
-          maxlength="200"
-          rows="2"
-          class="w-full rounded-lg border border-gray-600 bg-gray-700/50 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none"
-        />
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-500">{{ newCommentText.length }}/200</span>
-          <UButton
-            size="xs"
-            color="primary"
-            :disabled="!newCommentText.trim() || submitting"
-            @click="submitComment"
-          >
-            {{ submitting ? '...' : 'Отправить' }}
-          </UButton>
-        </div>
-      </div>
-    </div>
-
-    <!-- Vote buttons -->
-    <div class="flex items-center gap-2 border-t border-gray-700/50 px-4 py-3">
+    <!-- Vote buttons + comment toggle -->
+    <div class="flex flex-wrap items-center gap-2 border-t border-gray-700/50 px-4 py-3">
       <button
         type="button"
         class="flex items-center gap-1 rounded-md px-2 py-1 text-sm transition"
@@ -222,6 +188,92 @@ function stateLabel(stateId: string): string {
           {{ post.dislike_count }}
         </span>
       </button>
+      <button
+        v-if="post.action_type === 'game_created'"
+        type="button"
+        class="flex items-center gap-1 rounded-md px-2 py-1 text-sm transition text-gray-400 hover:bg-gray-600/50 hover:text-emerald-400"
+        :class="{ 'text-emerald-400': commentsExpanded }"
+        @click="commentsExpanded = !commentsExpanded"
+      >
+        <Icon name="lucide:message-circle" class="size-4" />
+        <span>{{ commentCount() }}</span>
+      </button>
+    </div>
+
+    <!-- Comments (expandable) for game_created -->
+    <div
+      v-if="post.action_type === 'game_created' && commentsExpanded"
+      class="border-t border-gray-700/50 p-4 space-y-4"
+    >
+      <div v-if="post.comments?.length" class="space-y-3">
+        <GameCommentItem
+          v-for="c in post.comments"
+          :key="c.id"
+          :comment="c"
+          :depth="0"
+          :avatar-full-url="avatarFullUrl"
+          :format-comment-date="formatCommentDate"
+          :game-id="post.game.id"
+          :max-depth="3"
+          @vote="(comment, like) => onVote(comment.id, like)"
+          @reply="startReply"
+        />
+        <NuxtLink
+          v-if="post.comments_total != null && post.comments_total > (post.comments?.length ?? 0)"
+          :to="`/games/${post.game.id}`"
+          class="inline-block text-sm text-emerald-400 hover:text-emerald-300"
+        >
+          Показать ещё ({{ post.comments_total - (post.comments?.length ?? 0) }})
+        </NuxtLink>
+      </div>
+      <p v-else-if="commentCount() === 0" class="text-sm text-gray-500">
+        Нет комментариев
+      </p>
+      <div v-if="replyToId" class="rounded-lg bg-gray-700/30 p-2">
+        <p class="mb-2 text-xs text-gray-400">Ответ на комментарий</p>
+        <div class="flex flex-col gap-2">
+          <textarea
+            v-model="newCommentText"
+            placeholder="Написать ответ (макс. 200 символов)"
+            maxlength="200"
+            rows="2"
+            class="w-full rounded-lg border border-gray-600 bg-gray-700/50 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none"
+          />
+          <div class="flex items-center gap-2">
+            <UButton size="xs" color="neutral" variant="ghost" @click="cancelReply">
+              Отмена
+            </UButton>
+            <UButton
+              size="xs"
+              color="primary"
+              :disabled="!newCommentText.trim() || submitting"
+              @click="submitComment(replyToId)"
+            >
+              {{ submitting ? '...' : 'Отправить' }}
+            </UButton>
+          </div>
+        </div>
+      </div>
+      <div v-else class="flex flex-col gap-2">
+        <textarea
+          v-model="newCommentText"
+          placeholder="Написать комментарий (макс. 200 символов)"
+          maxlength="200"
+          rows="2"
+          class="w-full rounded-lg border border-gray-600 bg-gray-700/50 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none"
+        />
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500">{{ newCommentText.length }}/200</span>
+          <UButton
+            size="xs"
+            color="primary"
+            :disabled="!newCommentText.trim() || submitting"
+            @click="submitComment()"
+          >
+            {{ submitting ? '...' : 'Отправить' }}
+          </UButton>
+        </div>
+      </div>
     </div>
   </article>
 </template>

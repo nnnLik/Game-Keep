@@ -64,6 +64,15 @@ async function loadMore() {
   }
 }
 
+const { avatarVersion } = useAvatarChange()
+watch(avatarVersion, async () => {
+  if (currentUser.value) {
+    try {
+      currentUser.value = await fetchMe($api)
+    } catch {}
+  }
+})
+
 onMounted(loadInitial)
 </script>
 

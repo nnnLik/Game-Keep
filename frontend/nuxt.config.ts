@@ -29,7 +29,7 @@ export default defineNuxtConfig({
   },
 
   imports: {
-    dirs: ['api'],
+    dirs: ['api', 'composables'],
   },
   routeRules: {
     '/register/complete': { redirect: '/complete-registration' },

@@ -21,7 +21,7 @@ import {
   voteActivity,
   type FeedPost,
 } from '~/api/feed.api'
-import { createComment } from '~/api/games.api'
+import { createComment, fetchComments, voteComment } from '~/api/games.api'
 
 const showCreateModal = ref(false)
 const showBannerEditor = ref(false)
@@ -66,6 +66,15 @@ const tabCounts = computed(() => {
     }
   }
   return counts
+})
+
+const { avatarVersion } = useAvatarChange()
+watch(avatarVersion, async () => {
+  if (user.value) {
+    try {
+      user.value = await fetchMe($api)
+    } catch {}
+  }
 })
 
 onMounted(async () => {
@@ -205,10 +214,25 @@ async function onActivityVote(post: FeedPost, isLike: boolean) {
   }
 }
 
-async function onActivityCommentSubmit(gameId: number, text: string) {
+async function refreshActivityPostComments(post: FeedPost) {
   try {
-    await createComment($api, gameId, text)
-    await loadActivity()
+    const comments = await fetchComments($api, post.game.id)
+    post.comments = comments.slice(0, 3)
+    post.comments_total = comments.length
+  } catch {
+    // ignore
+  }
+}
+
+async function onActivityCommentSubmit(
+  gameId: number,
+  text: string,
+  parentId?: number | null
+) {
+  try {
+    await createComment($api, gameId, text, parentId)
+    const post = activityPosts.value.find((p) => p.game.id === gameId)
+    if (post) await refreshActivityPostComments(post)
   } catch (e) {
     const err = e as { data?: { detail?: string } }
     toast.add({
@@ -216,6 +240,20 @@ async function onActivityCommentSubmit(gameId: number, text: string) {
       description: err?.data?.detail ?? 'Не удалось отправить комментарий',
       color: 'error',
     })
+  }
+}
+
+async function onActivityCommentVote(
+  gameId: number,
+  commentId: number,
+  isLike: boolean
+) {
+  try {
+    await voteComment($api, gameId, commentId, isLike)
+    const post = activityPosts.value.find((p) => p.game.id === gameId)
+    if (post) await refreshActivityPostComments(post)
+  } catch {
+    toast.add({ title: 'Ошибка голоса', color: 'error' })
   }
 }
 
@@ -420,6 +458,7 @@ function onGameCreated() {
               :format-date="formatDate"
               :format-comment-date="formatCommentDate"
               :on-comment-submit="onActivityCommentSubmit"
+              :on-comment-vote="onActivityCommentVote"
               @vote="onActivityVote"
             />
             <div

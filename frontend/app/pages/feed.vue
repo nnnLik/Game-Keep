@@ -4,7 +4,7 @@ import {
   voteActivity,
   type FeedPost,
 } from '~/api/feed.api'
-import { createComment } from '~/api/games.api'
+import { createComment, fetchComments, voteComment } from '~/api/games.api'
 
 definePageMeta({
   layout: 'default',
@@ -99,10 +99,25 @@ async function onVote(post: FeedPost, isLike: boolean) {
   }
 }
 
-async function onCommentSubmit(gameId: number, text: string) {
+async function refreshPostComments(post: FeedPost) {
   try {
-    await createComment($api, gameId, text)
-    await loadFeed()
+    const comments = await fetchComments($api, post.game.id)
+    post.comments = comments.slice(0, 3)
+    post.comments_total = comments.length
+  } catch {
+    // ignore
+  }
+}
+
+async function onCommentSubmit(
+  gameId: number,
+  text: string,
+  parentId?: number | null
+) {
+  try {
+    await createComment($api, gameId, text, parentId)
+    const post = posts.value.find((p) => p.game.id === gameId)
+    if (post) await refreshPostComments(post)
   } catch (e) {
     const err = e as { data?: { detail?: string } }
     toast.add({
@@ -110,6 +125,20 @@ async function onCommentSubmit(gameId: number, text: string) {
       description: err?.data?.detail ?? 'Не удалось отправить комментарий',
       color: 'error',
     })
+  }
+}
+
+async function onCommentVote(
+  gameId: number,
+  commentId: number,
+  isLike: boolean
+) {
+  try {
+    await voteComment($api, gameId, commentId, isLike)
+    const post = posts.value.find((p) => p.game.id === gameId)
+    if (post) await refreshPostComments(post)
+  } catch {
+    toast.add({ title: 'Ошибка голоса', color: 'error' })
   }
 }
 
@@ -168,6 +197,7 @@ onUnmounted(() => {
         :format-date="formatDate"
         :format-comment-date="formatCommentDate"
         :on-comment-submit="onCommentSubmit"
+        :on-comment-vote="onCommentVote"
         @vote="onVote"
       />
 
