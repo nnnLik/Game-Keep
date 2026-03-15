@@ -5,6 +5,7 @@ import {
   type FeedPost,
 } from '~/api/feed.api'
 import { createComment, fetchComments, voteComment } from '~/api/games.api'
+import { fetchMe } from '~/api/users.api'
 
 definePageMeta({
   layout: 'default',
@@ -15,6 +16,8 @@ const toast = useToast()
 const config = useRuntimeConfig()
 
 const posts = ref<FeedPost[]>([])
+const currentUser = ref<Awaited<ReturnType<typeof fetchMe>> | null>(null)
+const { avatarVersion } = useAvatarChange()
 const loading = ref(true)
 const loadingMore = ref(false)
 const nextCursor = ref<number | null>(null)
@@ -142,12 +145,34 @@ async function onCommentVote(
   }
 }
 
+watch(avatarVersion, async () => {
+  if (!currentUser.value?.tag || posts.value.length === 0) return
+  try {
+    const me = await fetchMe($api)
+    currentUser.value = me
+    const newAvatar = me.avatar_url
+    const cacheBuster = newAvatar ? `?v=${Date.now()}` : ''
+    for (const post of posts.value) {
+      if (post.author?.tag === me.tag) {
+        post.author.avatar_url = newAvatar ? `${newAvatar}${cacheBuster}` : newAvatar
+      }
+    }
+  } catch {
+    // ignore
+  }
+})
+
 function handleIntersect(entries: IntersectionObserverEntry[]) {
   if (!entries[0]?.isIntersecting || loadingMore.value || !nextCursor.value) return
   loadFeed(nextCursor.value)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    currentUser.value = await fetchMe($api)
+  } catch {
+    // not authenticated or error
+  }
   loadFeed()
 })
 

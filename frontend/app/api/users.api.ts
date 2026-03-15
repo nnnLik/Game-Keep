@@ -180,6 +180,15 @@ export async function uploadBanner(api: ApiClient, file: Blob) {
   })
 }
 
+export async function uploadAvatar(api: ApiClient, file: File) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  return api<MeResponse>(ApiEndpoint.Users.ME_AVATAR, {
+    method: 'PATCH',
+    body: formData,
+  })
+}
+
 export async function deleteBanner(api: ApiClient) {
   return api<MeResponse>(ApiEndpoint.Users.ME_BANNER, {
     method: 'DELETE',

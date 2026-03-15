@@ -14,7 +14,8 @@ definePageMeta({
 
 const { $api } = useNuxtApp()
 const toast = useToast()
-const { fetchMe, fetchMyGames, uploadBanner, deleteBanner } = await import('~/api/users.api')
+const { fetchMe, fetchMyGames, uploadBanner, deleteBanner, uploadAvatar } =
+  await import('~/api/users.api')
 import type { CreateGamePayload, GameResponse } from '~/api/users.api'
 import {
   fetchActivity,
@@ -33,6 +34,7 @@ const restoredDraft = ref<
 
 const user = ref<Awaited<ReturnType<typeof fetchMe>> | null>(null)
 const bannerCacheKey = ref(0)
+const avatarCacheKey = ref(0)
 const games = ref<GameResponse[]>([])
 const loading = ref(true)
 const gamesLoading = ref(true)
@@ -42,6 +44,8 @@ const activityLoading = ref(false)
 const activityLoadingMore = ref(false)
 const activityNextCursor = ref<number | null>(null)
 const activitySentinelRef = ref<HTMLElement | null>(null)
+const avatarInputRef = ref<HTMLInputElement | null>(null)
+const avatarUploading = ref(false)
 
 type SectionId = 'games' | 'activities'
 const activeSection = ref<SectionId>('games')
@@ -117,10 +121,47 @@ onUnmounted(() => {
 
 const config = useRuntimeConfig()
 
+function openAvatarPicker() {
+  avatarInputRef.value?.click()
+}
+
+async function onAvatarFileChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || avatarUploading.value) return
+  if (!file.type.startsWith('image/')) {
+    toast.add({ title: 'Выберите изображение (jpg, png, gif, webp)', color: 'error' })
+    return
+  }
+  if (file.size > 25 * 1024 * 1024) {
+    toast.add({ title: 'Файл не более 25 МБ', color: 'error' })
+    return
+  }
+  avatarUploading.value = true
+  try {
+    const updated = await uploadAvatar($api, file)
+    user.value = updated
+    avatarCacheKey.value++
+    useAvatarChange().emitAvatarChange()
+    toast.add({ title: 'Аватар обновлён', color: 'success' })
+  } catch (err: unknown) {
+    const d = (err as { data?: { detail?: string } })?.data?.detail
+    toast.add({
+      title: 'Ошибка',
+      description: typeof d === 'string' ? d : 'Не удалось загрузить',
+      color: 'error',
+    })
+  } finally {
+    avatarUploading.value = false
+  }
+}
+
 function avatarFullUrl(avatarUrl: string | null | undefined): string | null {
   if (!avatarUrl) return null
   const base = (config.public.apiBase as string) || ''
-  return `${base.replace(/\/$/, '')}/uploads/${avatarUrl}`
+  const url = `${base.replace(/\/$/, '')}/uploads/${avatarUrl}`
+  return `${url}?v=${avatarCacheKey.value}`
 }
 
 function bannerFullUrl(bannerUrl: string | null | undefined): string | null {
@@ -385,9 +426,16 @@ function onGameCreated() {
           </div>
         </div>
         <div
-          class="relative -mt-20 flex size-36 shrink-0 items-center justify-center overflow-hidden self-start rounded-full border-4 border-gray-950 bg-gray-600"
+          class="group relative -mt-20 flex size-36 shrink-0 items-center justify-center overflow-hidden self-start rounded-full border-4 border-gray-950 bg-gray-600"
           aria-label="Аватар"
         >
+          <input
+            ref="avatarInputRef"
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            class="hidden"
+            @change="onAvatarFileChange"
+          />
           <img
             v-if="avatarFullUrl(user.avatar_url)"
             :src="avatarFullUrl(user.avatar_url) ?? ''"
@@ -395,6 +443,19 @@ function onGameCreated() {
             class="size-full object-cover"
           />
           <Icon v-else name="lucide:user" class="size-20 text-gray-400" />
+          <div
+            class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100"
+          >
+            <button
+              type="button"
+              class="flex size-10 items-center justify-center rounded-full bg-gray-800/90 text-white transition hover:bg-gray-700 disabled:opacity-50"
+              aria-label="Изменить аватар"
+              :disabled="avatarUploading"
+              @click.stop="openAvatarPicker"
+            >
+              <Icon name="lucide:camera" class="size-5" />
+            </button>
+          </div>
         </div>
         <div class="mt-4 flex flex-col gap-1">
           <div class="flex items-baseline gap-2">

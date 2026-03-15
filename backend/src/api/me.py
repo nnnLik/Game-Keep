@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dtos.users import MeResponseDTO, ProfileByTagResponseDTO, UsersListResponseDTO
@@ -10,6 +10,7 @@ from services.feed import GetUserActivityService
 from infra.db import get_db
 from models.user import User
 from services.users.create_banner_service import CreateBannerService
+from services.users.update_avatar_service import UpdateAvatarService
 from services.users.delete_banner_service import DeleteBannerService
 from services.users.get_profile_by_tag_service import GetProfileByTagService
 from services.users.list_users_service import ListUsersService
@@ -74,6 +75,28 @@ async def update_banner(
         raise HTTPException(400, 'Banner too large (max 2 MB)')
     except CreateBannerService.InvalidFormatError:
         raise HTTPException(400, 'Only PNG allowed')
+    return await MeService.build(session).execute(current_user.id)
+
+
+@router.patch('/me/avatar', response_model=MeResponseDTO)
+async def update_avatar(
+    current_user: CurrentUserDep,
+    session: SessionDep,
+    avatar: UploadFile = File(...),
+) -> MeResponseDTO:
+    service = UpdateAvatarService.build(session)
+    try:
+        await service.execute(current_user.id, avatar)
+    except UpdateAvatarService.AvatarInvalidFormatError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Неверный формат аватара. Допустимы: {", ".join(UpdateAvatarService.ALLOWED_EXTENSIONS)}',
+        )
+    except UpdateAvatarService.AvatarTooLargeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Аватар слишком большой (макс. 25 МБ)',
+        )
     return await MeService.build(session).execute(current_user.id)
 
 

@@ -21,6 +21,7 @@ export const ApiEndpoint = {
     LIST: '/users',
     BY_TAG: (tag: string) => `/users/by-tag/${tag}`,
     ME: '/users/me',
+    ME_AVATAR: '/users/me/avatar',
     ME_BANNER: '/users/me/banner',
     ME_GAMES: '/users/me/games',
     ME_GAME: (id: number) => `/users/me/games/${id}`,
