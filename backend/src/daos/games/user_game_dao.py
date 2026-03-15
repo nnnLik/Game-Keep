@@ -84,3 +84,19 @@ class UserGameDAO:
         await self._session.flush()
         await self._session.refresh(game)
         return game
+
+    async def update_is_favorite(
+        self, game_id: int, user_id: UUID, is_favorite: bool
+    ) -> UserGame | None:
+        stmt = select(UserGame).where(
+            UserGame.id == game_id,
+            UserGame.user_id == user_id,
+        )
+        result = await self._session.execute(stmt)
+        game = result.scalar_one_or_none()
+        if game is None:
+            return None
+        game.is_favorite = is_favorite
+        await self._session.flush()
+        await self._session.refresh(game)
+        return game

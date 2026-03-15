@@ -18,6 +18,7 @@ export const ApiEndpoint = {
     ME: '/users/me',
     ME_BANNER: '/users/me/banner',
     ME_GAMES: '/users/me/games',
+    ME_GAME: (id: number) => `/users/me/games/${id}`,
     ME_GAMES_FETCH_STEAM: '/users/me/games/fetch-steam',
   },
 } as const

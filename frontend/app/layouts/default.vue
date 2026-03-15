@@ -8,7 +8,7 @@ function logout() {
 <template>
   <div class="min-h-screen bg-gray-900 flex">
     <!-- Сайдбар без границы -->
-    <aside class="w-96 shrink-0 pl-40 pr-8 py-12 flex flex-col">
+    <aside class="w-120 shrink-0 pl-40 pr-8 py-12 flex flex-col">
       <div class="mb-16 sidebar-title">
         <h1 class="text-5xl font-bold text-white tracking-tight leading-tight">
           Game&Keep
@@ -55,7 +55,7 @@ function logout() {
 
     <!-- Контент -->
     <main class="flex-1 min-w-0">
-      <div class="mx-auto w-full max-w-4xl px-6 py-10">
+      <div class="ml-20 w-full max-w-4xl px-6 py-10">
         <slot />
       </div>
     </main>

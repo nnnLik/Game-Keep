@@ -129,6 +129,17 @@ export async function createGame(api: ApiClient, payload: CreateGamePayload) {
   })
 }
 
+export async function updateGameFavorite(
+  api: ApiClient,
+  gameId: number,
+  isFavorite: boolean
+) {
+  return api<GameResponse>(ApiEndpoint.Users.ME_GAME(gameId), {
+    method: 'PATCH',
+    body: { is_favorite: isFavorite },
+  })
+}
+
 export async function uploadBanner(api: ApiClient, file: Blob) {
   const formData = new FormData()
   formData.append('banner', file, 'banner.png')

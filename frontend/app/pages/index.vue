@@ -32,6 +32,9 @@ const loading = ref(true)
 const gamesLoading = ref(true)
 const error = ref<string | null>(null)
 
+type SectionId = 'games' | 'activities'
+const activeSection = ref<SectionId>('games')
+
 type TabId = (typeof TABS)[number]['id']
 const activeTab = ref<TabId>(DEFAULT_GAME_STATE)
 
@@ -229,49 +232,86 @@ function onGameCreated() {
         </div>
       </div>
 
-      <!-- Табы стейтов -->
+      <!-- Табы: Активности | Игры -->
       <div class="mb-6">
-        <div
-          class="flex gap-1 border-b border-gray-700"
-          role="tablist"
-        >
+        <div class="mb-4 flex gap-1 border-b border-gray-700" role="tablist">
           <button
-            v-for="tab in TABS"
-            :key="tab.id"
             type="button"
             role="tab"
-            :aria-selected="activeTab === tab.id"
+            :aria-selected="activeSection === 'games'"
             class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors"
             :class="
-              activeTab === tab.id
-                ? TAB_ACTIVE_CLASSES[tab.colorKey]
+              activeSection === 'games'
+                ? 'border-emerald-500/70 text-emerald-200'
                 : 'border-transparent text-gray-400 hover:text-gray-300'
             "
-            @click="activeTab = tab.id"
+            @click="activeSection = 'games'"
           >
-            <Icon
-              :name="tab.icon"
-              class="size-4 shrink-0"
-              :class="activeTab === tab.id ? TAB_ICON_CLASSES[tab.colorKey] : ''"
-            />
-            <span>{{ tab.label }}</span>
-            <span
-              class="rounded-full px-2 py-0.5 text-xs"
-              :class="
-                activeTab === tab.id
-                  ? TAB_BADGE_CLASSES[tab.colorKey]
-                  : 'bg-gray-700/80 text-gray-400'
-              "
-            >
-              {{ tabCounts[tab.id] }}
-            </span>
+            <Icon name="lucide:gamepad-2" class="size-4 shrink-0" />
+            <span>Игры</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            :aria-selected="activeSection === 'activities'"
+            class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors"
+            :class="
+              activeSection === 'activities'
+                ? 'border-emerald-500/70 text-emerald-200'
+                : 'border-transparent text-gray-400 hover:text-gray-300'
+            "
+            @click="activeSection = 'activities'"
+          >
+            <Icon name="lucide:activity" class="size-4 shrink-0" />
+            <span>Активности</span>
           </button>
         </div>
-      </div>
 
-      <!-- Список игр -->
-      <div v-if="gamesLoading" class="text-gray-400">Загрузка игр...</div>
-      <ul v-else class="flex flex-col gap-2">
+        <div
+          v-if="activeSection === 'activities'"
+          class="rounded-lg border border-gray-700/50 bg-gray-800/40 p-8 text-center text-gray-500"
+        >
+          Активности (скоро)
+        </div>
+
+        <template v-else>
+          <div class="mb-4 flex gap-1 border-b border-gray-700" role="tablist">
+            <button
+              v-for="tab in TABS"
+              :key="tab.id"
+              type="button"
+              role="tab"
+              :aria-selected="activeTab === tab.id"
+              class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors"
+              :class="
+                activeTab === tab.id
+                  ? TAB_ACTIVE_CLASSES[tab.colorKey]
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              "
+              @click="activeTab = tab.id"
+            >
+              <Icon
+                :name="tab.icon"
+                class="size-4 shrink-0"
+                :class="activeTab === tab.id ? TAB_ICON_CLASSES[tab.colorKey] : ''"
+              />
+              <span>{{ tab.label }}</span>
+              <span
+                class="rounded-full px-2 py-0.5 text-xs"
+                :class="
+                  activeTab === tab.id
+                    ? TAB_BADGE_CLASSES[tab.colorKey]
+                    : 'bg-gray-700/80 text-gray-400'
+                "
+              >
+                {{ tabCounts[tab.id] }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Список игр -->
+          <div v-if="gamesLoading" class="text-gray-400">Загрузка игр...</div>
+          <ul v-else class="flex flex-col gap-2">
         <li
           v-for="game in filteredGames"
           :key="game.id"
@@ -311,6 +351,8 @@ function onGameCreated() {
           В этой категории пока нет игр
         </li>
       </ul>
+        </template>
+      </div>
 
       <!-- FAB -->
       <button

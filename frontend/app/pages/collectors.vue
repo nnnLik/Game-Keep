@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { fetchUsersList } from '~/api/users.api'
+import { fetchUsersList, fetchMe } from '~/api/users.api'
 import type { UserListItem } from '~/api/users.api'
 
 definePageMeta({
@@ -9,6 +9,7 @@ definePageMeta({
 const { $api } = useNuxtApp()
 const config = useRuntimeConfig()
 
+const currentUser = ref<Awaited<ReturnType<typeof fetchMe>> | null>(null)
 const users = ref<UserListItem[]>([])
 const nextCursor = ref<string | null>(null)
 const hasMore = ref(false)
@@ -22,11 +23,22 @@ function avatarFullUrl(avatarUrl: string | null | undefined): string | null {
   return `${base.replace(/\/$/, '')}/uploads/${avatarUrl}`
 }
 
+function userHref(tag: string | null): string {
+  if (!tag) return '#'
+  if (currentUser.value?.tag === tag) return '/'
+  return `/users/${tag}`
+}
+
 async function loadInitial() {
   loading.value = true
   error.value = null
   try {
-    const res = await fetchUsersList($api, { limit: 20 })
+    const [meRes, listRes] = await Promise.allSettled([
+      fetchMe($api),
+      fetchUsersList($api, { limit: 20 }),
+    ])
+    if (meRes.status === 'fulfilled') currentUser.value = meRes.value
+    const res = listRes.status === 'fulfilled' ? listRes.value : await fetchUsersList($api, { limit: 20 })
     users.value = res.items
     nextCursor.value = res.next_cursor
     hasMore.value = res.has_more
@@ -68,7 +80,7 @@ onMounted(loadInitial)
       <ul class="flex flex-col gap-2">
         <li v-for="u in users" :key="u.tag ?? ''">
           <NuxtLink
-            :to="u.tag ? `/users/${u.tag}` : '#'"
+            :to="userHref(u.tag)"
             class="flex items-center gap-4 rounded-lg bg-gray-800/50 px-4 py-3 transition-colors hover:bg-gray-800"
           >
             <div

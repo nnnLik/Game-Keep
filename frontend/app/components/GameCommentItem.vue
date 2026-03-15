@@ -57,7 +57,13 @@ const emit = defineEmits<{
             ]"
             @click="emit('vote', comment, true)"
           >
-            <Icon name="lucide:thumbs-up" :class="depth === 0 ? 'size-4' : 'size-3'" />
+            <Icon
+              name="lucide:thumbs-up"
+              :class="[
+                depth === 0 ? 'size-4' : 'size-3',
+                comment.current_user_voted.liked ? 'fill-current' : '',
+              ]"
+            />
             {{ comment.like_count }}
           </button>
           <button
@@ -69,7 +75,13 @@ const emit = defineEmits<{
             ]"
             @click="emit('vote', comment, false)"
           >
-            <Icon name="lucide:thumbs-down" :class="depth === 0 ? 'size-4' : 'size-3'" />
+            <Icon
+              name="lucide:thumbs-down"
+              :class="[
+                depth === 0 ? 'size-4' : 'size-3',
+                comment.current_user_voted.disliked ? 'fill-current' : '',
+              ]"
+            />
             {{ comment.dislike_count }}
           </button>
           <button

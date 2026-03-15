@@ -34,7 +34,6 @@ const step = ref(1)
 const steamUrl = ref('')
 const form = reactive<
   CreateGamePayload & {
-    is_favorite: boolean
     genres: { id: string; description: string }[]
     developers: string[]
     publishers: string[]
@@ -44,7 +43,6 @@ const form = reactive<
   image_url: null as string | null,
   steam_app_id: null as string | null,
   state: DEFAULT_GAME_STATE,
-  is_favorite: false,
   genres: [],
   developers: [],
   publishers: [],
@@ -76,7 +74,6 @@ watch(
         form.image_url = props.initialDraft.image_url ?? null
         form.steam_app_id = props.initialDraft.steam_app_id ?? null
         form.state = props.initialDraft.state ?? DEFAULT_GAME_STATE
-        form.is_favorite = props.initialDraft.is_favorite ?? false
         form.genres = props.initialDraft.genres ?? []
         form.developers = props.initialDraft.developers ?? []
         form.publishers = props.initialDraft.publishers ?? []
@@ -92,7 +89,6 @@ watch(
         form.image_url = null
         form.steam_app_id = null
         form.state = DEFAULT_GAME_STATE
-        form.is_favorite = false
         form.genres = []
         form.developers = []
         form.publishers = []
@@ -125,7 +121,6 @@ function closeWithDraft() {
       image_url: form.image_url || undefined,
       steam_app_id: form.steam_app_id ?? undefined,
       state: form.state,
-      is_favorite: form.is_favorite,
       genres: form.genres.length ? form.genres : undefined,
       developers: form.developers.length ? form.developers : undefined,
       publishers: form.publishers.length ? form.publishers : undefined,
@@ -223,7 +218,6 @@ async function submit() {
       image_url: form.image_url || undefined,
       steam_app_id: form.steam_app_id || undefined,
       state: form.state,
-      is_favorite: form.is_favorite,
       genres: form.genres?.length ? form.genres : undefined,
       developers: form.developers?.length ? form.developers : undefined,
       publishers: form.publishers?.length ? form.publishers : undefined,
@@ -497,27 +491,6 @@ onUnmounted(() => {
                     {{ opt.label }}
                   </option>
                 </select>
-              </div>
-              <div class="flex items-center gap-3">
-                <button
-                  type="button"
-                  role="checkbox"
-                  :aria-checked="form.is_favorite"
-                  class="flex items-center gap-2 rounded-lg border px-4 py-2 transition-colors"
-                  :class="
-                    form.is_favorite
-                      ? 'border-rose-500/70 bg-rose-500/20 text-rose-400'
-                      : 'border-gray-600 bg-gray-800/50 text-gray-400 hover:border-gray-500 hover:text-gray-300'
-                  "
-                  @click="form.is_favorite = !form.is_favorite"
-                >
-                  <Icon
-                    name="lucide:heart"
-                    class="size-4"
-                    :class="form.is_favorite ? 'fill-current' : ''"
-                  />
-                  <span>В избранное</span>
-                </button>
               </div>
               <div>
                 <label for="game-note" class="mb-1 block text-xs text-gray-500">

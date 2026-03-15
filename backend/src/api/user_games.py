@@ -5,13 +5,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import constants.game
 from dtos.games import FetchSteamResponseDTO, GenreDTO
-from dtos.users import CreateGameRequestDTO, GameResponseDTO
+from dtos.users import (
+    CreateGameRequestDTO,
+    GameResponseDTO,
+    UpdateGameFavoriteRequestDTO,
+)
 from infra.auth import get_current_user
 from infra.db import get_db
 from models.user import User
 from services.games.fetch_steam_game_service import FetchSteamGameService
 from services.users.create_game_service import CreateGameService
 from services.users.my_games_service import MyGamesService
+from services.users.update_game_favorite_service import UpdateGameFavoriteService
 
 router = APIRouter(prefix='/users/me', tags=['games'])
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
@@ -69,6 +74,26 @@ async def create_game(
         date_finished=data.date_finished,
         hours_played=data.hours_played,
     )
+
+
+@router.patch('/games/{game_id}', response_model=GameResponseDTO)
+async def update_game_favorite(
+    game_id: int,
+    data: UpdateGameFavoriteRequestDTO,
+    current_user: CurrentUserDep,
+    session: SessionDep,
+) -> GameResponseDTO:
+    result = await UpdateGameFavoriteService.build(session).execute(
+        game_id=game_id,
+        user_id=current_user.id,
+        is_favorite=data.is_favorite,
+    )
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Game not found',
+        )
+    return result
 
 
 @router.get('/games', response_model=list[GameResponseDTO])

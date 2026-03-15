@@ -6,6 +6,7 @@ import {
   createComment,
   voteComment,
 } from '~/api/games.api'
+import { updateGameFavorite } from '~/api/users.api'
 import type {
   GameDetailResponse,
   CommentResponse,
@@ -30,6 +31,7 @@ const newCommentText = ref('')
 const replyToId = ref<number | null>(null)
 const submitting = ref(false)
 const commentsLoading = ref(false)
+const favoriteToggling = ref(false)
 
 const config = useRuntimeConfig()
 
@@ -216,8 +218,26 @@ onMounted(async () => {
                 >
                   {{ stateLabel }}
                 </span>
+                <button
+                  v-if="isOwnGame"
+                  type="button"
+                  class="flex items-center justify-center transition hover:opacity-80 disabled:opacity-50"
+                  :disabled="favoriteToggling"
+                  aria-label="В избранное"
+                  @click="toggleFavorite"
+                >
+                  <Icon
+                    name="lucide:heart"
+                    class="size-4 transition-colors"
+                    :class="
+                      game.is_favorite
+                        ? 'fill-red-500 text-red-500'
+                        : 'text-gray-400 hover:text-red-400'
+                    "
+                  />
+                </button>
                 <Icon
-                  v-if="game.is_favorite"
+                  v-else-if="game.is_favorite"
                   name="lucide:heart"
                   class="size-4 fill-red-500 text-red-500"
                 />

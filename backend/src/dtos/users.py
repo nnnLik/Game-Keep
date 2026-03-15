@@ -6,6 +6,10 @@ from pydantic import BaseModel, field_validator
 import constants.game
 
 
+class UpdateGameFavoriteRequestDTO(BaseModel):
+    is_favorite: bool
+
+
 class CreateGameRequestDTO(BaseModel):
     name: str
     image_url: str | None = None
