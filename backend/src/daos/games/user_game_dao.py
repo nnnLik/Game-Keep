@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 import constants.game
 from models.user_game import UserGame
@@ -19,9 +20,12 @@ class UserGameDAO:
         return cls(_session=session)
 
     async def get_by_id(self, game_id: int) -> UserGame | None:
-        result = await self._session.execute(
-            select(UserGame).where(UserGame.id == game_id)
+        stmt = (
+            select(UserGame)
+            .options(selectinload(UserGame.user))
+            .where(UserGame.id == game_id)
         )
+        result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def increment_view_count(self, game: UserGame) -> None:
