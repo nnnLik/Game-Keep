@@ -50,10 +50,12 @@ const emit = defineEmits<{
         <div class="mt-2 flex items-center gap-4" :class="depth === 0 ? '' : 'gap-3'">
           <button
             type="button"
-            class="flex items-center gap-1 text-gray-400 transition hover:text-emerald-400"
+            class="flex items-center gap-1 rounded-md px-2 py-1 transition"
             :class="[
               depth === 0 ? 'text-sm' : 'text-xs',
-              { 'text-emerald-400': comment.current_user_voted.liked },
+              comment.current_user_voted.liked
+                ? 'bg-emerald-500/25 text-emerald-400 hover:bg-emerald-500/35'
+                : 'text-gray-400 hover:bg-gray-600/50 hover:text-emerald-400',
             ]"
             @click="emit('vote', comment, true)"
           >
@@ -64,14 +66,18 @@ const emit = defineEmits<{
                 comment.current_user_voted.liked ? 'fill-current' : '',
               ]"
             />
-            {{ comment.like_count }}
+            <span :class="comment.current_user_voted.liked ? 'font-semibold' : ''">
+              {{ comment.like_count }}
+            </span>
           </button>
           <button
             type="button"
-            class="flex items-center gap-1 text-gray-400 transition hover:text-rose-400"
+            class="flex items-center gap-1 rounded-md px-2 py-1 transition"
             :class="[
               depth === 0 ? 'text-sm' : 'text-xs',
-              { 'text-rose-400': comment.current_user_voted.disliked },
+              comment.current_user_voted.disliked
+                ? 'bg-rose-500/25 text-rose-400 hover:bg-rose-500/35'
+                : 'text-gray-400 hover:bg-gray-600/50 hover:text-rose-400',
             ]"
             @click="emit('vote', comment, false)"
           >
@@ -82,7 +88,9 @@ const emit = defineEmits<{
                 comment.current_user_voted.disliked ? 'fill-current' : '',
               ]"
             />
-            {{ comment.dislike_count }}
+            <span :class="comment.current_user_voted.disliked ? 'font-semibold' : ''">
+              {{ comment.dislike_count }}
+            </span>
           </button>
           <button
             type="button"

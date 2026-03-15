@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar, Self
@@ -15,6 +16,18 @@ class CompleteRegistrationService:
     _user_dao: UserDAO
 
     class CompleteRegistrationServiceError(Exception):
+        pass
+
+    class UsernameTooShortError(CompleteRegistrationServiceError):
+        pass
+
+    class TagTooShortError(CompleteRegistrationServiceError):
+        pass
+
+    class TagTooLongError(CompleteRegistrationServiceError):
+        pass
+
+    class TagInvalidCharactersError(CompleteRegistrationServiceError):
         pass
 
     class TagAlreadyTakenError(CompleteRegistrationServiceError):
@@ -39,6 +52,20 @@ class CompleteRegistrationService:
     def build(cls, session: AsyncSession) -> Self:
         return cls(_user_dao=UserDAO.build(session))
 
+    def _validate_username(self, username: str) -> None:
+        if len(username) < 5:
+            raise self.UsernameTooShortError
+
+    def _validate_tag(self, tag: str) -> str:
+        tag = tag.strip().lower()
+        if len(tag) < 3:
+            raise self.TagTooShortError
+        if len(tag) > 15:
+            raise self.TagTooLongError
+        if not re.fullmatch(r'[a-z0-9]+', tag):
+            raise self.TagInvalidCharactersError
+        return tag
+
     async def execute(
         self,
         user_id: UUID,
@@ -46,6 +73,9 @@ class CompleteRegistrationService:
         tag: str,
         avatar: UploadFile | None = None,
     ) -> None:
+        self._validate_username(username)
+        tag = self._validate_tag(tag)
+
         user = await self._user_dao.get_by_id(user_id)
         if not user:
             raise self.UserNotFoundError

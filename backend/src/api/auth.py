@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dtos.auth import (
-    CompleteRegistrationRequestDTO,
     LoginRequestDTO,
     RefreshRequestDTO,
     RegisterRequestDTO,
@@ -67,16 +66,36 @@ async def register(
             data.email,
             data.password,
         )
-    except RegisterService.TagAlreadyTakenError as e:
+    except RegisterService.UsernameTooShortError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Tag already taken',
+            detail='Имя пользователя должно быть не менее 5 символов',
         ) from e
-    except RegisterService.EmailAlreadyTakenError as e:
+    except RegisterService.TagTooShortError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Email already taken',
+            detail='Тег должен быть от 3 до 15 символов',
         ) from e
+    except RegisterService.TagTooLongError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Тег должен быть от 3 до 15 символов',
+        ) from e
+    except RegisterService.TagInvalidCharactersError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Тег может содержать только буквы и цифры',
+        ) from e
+    except RegisterService.TagAlreadyTakenError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Тег уже занят',
+        )
+    except RegisterService.EmailAlreadyTakenError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Email уже занят',
+        )
 
 
 @router.post('/register-start', response_model=TokenResponseDTO)
@@ -87,11 +106,16 @@ async def register_start(
     service = RegisterStartService.build(session)
     try:
         return await service.execute(data.email, data.password)
-    except RegisterStartService.EmailAlreadyTakenError as e:
+    except RegisterStartService.PasswordTooShortError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Email already taken',
+            detail='Пароль должен быть не менее 8 символов',
         ) from e
+    except RegisterStartService.EmailAlreadyTakenError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Email уже занят',
+        )
 
 
 @router.post('/complete-registration')
@@ -102,34 +126,43 @@ async def complete_registration(
     tag: str = Form(...),
     avatar: UploadFile | None = File(None),
 ) -> dict:
-    data = CompleteRegistrationRequestDTO(username=username, tag=tag)
     service = CompleteRegistrationService.build(session)
     try:
         await service.execute(
             user_id=current_user.id,
-            username=data.username,
-            tag=data.tag,
+            username=username,
+            tag=tag,
             avatar=avatar,
         )
-    except CompleteRegistrationService.TagAlreadyTakenError as e:
+    except CompleteRegistrationService.UsernameTooShortError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Tag already taken',
+            detail='Имя пользователя должно быть не менее 5 символов',
         ) from e
-    except CompleteRegistrationService.UserAlreadyCompleteError as e:
+    except CompleteRegistrationService.TagTooShortError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Registration already complete',
+            detail='Тег должен быть от 3 до 15 символов',
         ) from e
-    except CompleteRegistrationService.AvatarInvalidFormatError as e:
+    except CompleteRegistrationService.TagAlreadyTakenError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f'Invalid avatar format. Allowed: {", ".join(CompleteRegistrationService.ALLOWED_EXTENSIONS)}',
-        ) from e
-    except CompleteRegistrationService.AvatarTooLargeError as e:
+            detail='Тег уже занят',
+        )
+    except CompleteRegistrationService.UserAlreadyCompleteError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Avatar too large (max 5 MB)',
-        ) from e
+            detail='Регистрация уже завершена',
+        )
+    except CompleteRegistrationService.AvatarInvalidFormatError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Неверный формат аватара. Допустимы: {", ".join(CompleteRegistrationService.ALLOWED_EXTENSIONS)}',
+        )
+    except CompleteRegistrationService.AvatarTooLargeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Аватар слишком большой (макс. 25 МБ)',
+        )
 
     return {'ok': True}

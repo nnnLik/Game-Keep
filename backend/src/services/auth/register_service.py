@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from typing import Self
 
@@ -17,10 +18,25 @@ class RegisterService:
     class RegisterServiceError(Exception):
         pass
 
+    class UsernameTooShortError(RegisterServiceError):
+        pass
+
+    class TagTooShortError(RegisterServiceError):
+        pass
+
+    class TagTooLongError(RegisterServiceError):
+        pass
+
+    class TagInvalidCharactersError(RegisterServiceError):
+        pass
+
     class TagAlreadyTakenError(RegisterServiceError):
         pass
 
     class EmailAlreadyTakenError(RegisterServiceError):
+        pass
+
+    class PasswordTooShortError(RegisterServiceError):
         pass
 
     @classmethod
@@ -31,6 +47,24 @@ class RegisterService:
             _create_token=CreateTokenService.build(),
         )
 
+    def _validate_username(self, username: str) -> None:
+        if len(username) < 5:
+            raise self.UsernameTooShortError
+
+    def _validate_tag(self, tag: str) -> str:
+        tag = tag.strip().lower()
+        if len(tag) < 3:
+            raise self.TagTooShortError
+        if len(tag) > 15:
+            raise self.TagTooLongError
+        if not re.fullmatch(r'[a-z0-9]+', tag):
+            raise self.TagInvalidCharactersError
+        return tag
+
+    def _validate_password(self, password: str) -> None:
+        if len(password) < 8:
+            raise self.PasswordTooShortError
+
     async def execute(
         self,
         username: str,
@@ -38,6 +72,10 @@ class RegisterService:
         email: str,
         password: str,
     ) -> TokenResponseDTO:
+        self._validate_username(username)
+        tag = self._validate_tag(tag)
+        self._validate_password(password)
+
         existing_tag = await self._user_dao.get_by_tag(tag)
         if existing_tag:
             raise self.TagAlreadyTakenError

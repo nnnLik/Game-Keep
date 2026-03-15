@@ -17,6 +17,9 @@ class RegisterStartService:
     class RegisterStartServiceError(Exception):
         pass
 
+    class PasswordTooShortError(RegisterStartServiceError):
+        pass
+
     class EmailAlreadyTakenError(RegisterStartServiceError):
         pass
 
@@ -28,7 +31,13 @@ class RegisterStartService:
             _create_token=CreateTokenService.build(),
         )
 
+    def _validate_password(self, password: str) -> None:
+        if len(password) < 8:
+            raise self.PasswordTooShortError
+
     async def execute(self, email: str, password: str) -> TokenResponseDTO:
+        self._validate_password(password)
+
         existing = await self._user_dao.get_by_email(email)
         if existing:
             raise self.EmailAlreadyTakenError
