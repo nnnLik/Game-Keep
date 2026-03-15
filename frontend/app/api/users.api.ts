@@ -9,6 +9,7 @@ export interface MeResponse {
   created_at: string
   is_registration_complete: boolean
   avatar_url: string | null
+  banner_url: string | null
 }
 
 export interface GameResponse {
@@ -62,5 +63,20 @@ export async function createGame(api: ApiClient, payload: CreateGamePayload) {
   return api<GameResponse>(ApiEndpoint.Users.ME_GAMES, {
     method: 'POST',
     body: payload,
+  })
+}
+
+export async function uploadBanner(api: ApiClient, file: Blob) {
+  const formData = new FormData()
+  formData.append('banner', file)
+  return api<MeResponse>(ApiEndpoint.Users.ME_BANNER, {
+    method: 'PATCH',
+    body: formData,
+  })
+}
+
+export async function deleteBanner(api: ApiClient) {
+  return api<MeResponse>(ApiEndpoint.Users.ME_BANNER, {
+    method: 'DELETE',
   })
 }

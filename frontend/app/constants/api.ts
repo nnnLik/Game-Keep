@@ -8,6 +8,7 @@ export const ApiEndpoint = {
   },
   Users: {
     ME: '/users/me',
+    ME_BANNER: '/users/me/banner',
     ME_GAMES: '/users/me/games',
     ME_GAMES_FETCH_STEAM: '/users/me/games/fetch-steam',
   },
