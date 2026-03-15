@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { TABS } from '~/constants'
-import { fetchGame } from '~/api/games.api'
-import type { GameDetailResponse } from '~/api/games.api'
+import {
+  fetchGame,
+  fetchComments,
+  createComment,
+  voteComment,
+} from '~/api/games.api'
+import type {
+  GameDetailResponse,
+  CommentResponse,
+} from '~/api/games.api'
 import { fetchMe } from '~/api/users.api'
 
 definePageMeta({
@@ -11,11 +19,17 @@ definePageMeta({
 const route = useRoute()
 const gameId = computed(() => Number(route.params.id))
 const { $api } = useNuxtApp()
+const toast = useToast()
 
 const game = ref<GameDetailResponse | null>(null)
 const currentUser = ref<Awaited<ReturnType<typeof fetchMe>> | null>(null)
+const comments = ref<CommentResponse[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+const newCommentText = ref('')
+const replyToId = ref<number | null>(null)
+const submitting = ref(false)
+const commentsLoading = ref(false)
 
 const config = useRuntimeConfig()
 
@@ -46,6 +60,67 @@ function formatDate(iso: string | null | undefined): string {
   })
 }
 
+function formatCommentDate(iso: string): string {
+  return new Date(iso).toLocaleString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+async function loadComments() {
+  if (!currentUser.value) return
+  commentsLoading.value = true
+  try {
+    comments.value = await fetchComments($api, gameId.value)
+  } catch {
+    comments.value = []
+  } finally {
+    commentsLoading.value = false
+  }
+}
+
+async function submitComment() {
+  if (!currentUser.value || !game.value) return
+  const text = newCommentText.value.trim()
+  if (!text || text.length > 200) return
+  submitting.value = true
+  try {
+    await createComment($api, gameId.value, text, replyToId.value)
+    newCommentText.value = ''
+    replyToId.value = null
+    await loadComments()
+  } catch (e: unknown) {
+    const err = e as { data?: { detail?: string } }
+    toast.add({
+      title: 'Ошибка',
+      description: err?.data?.detail ?? 'Не удалось отправить комментарий',
+      color: 'error',
+    })
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function onVote(comment: CommentResponse, isLike: boolean) {
+  if (!currentUser.value) return
+  try {
+    await voteComment($api, gameId.value, comment.id, isLike)
+    await loadComments()
+  } catch {
+    toast.add({ title: 'Ошибка голоса', color: 'error' })
+  }
+}
+
+function startReply(id: number) {
+  replyToId.value = id
+}
+
+function cancelReply() {
+  replyToId.value = null
+}
+
 onMounted(async () => {
   try {
     const [gameRes, meRes] = await Promise.allSettled([
@@ -64,6 +139,9 @@ onMounted(async () => {
     }
     if (meRes.status === 'fulfilled') {
       currentUser.value = meRes.value
+    }
+    if (currentUser.value) {
+      await loadComments()
     }
   } catch {
     error.value = 'Не удалось загрузить игру'
@@ -190,6 +268,68 @@ onMounted(async () => {
               @{{ game.owner.tag }}
             </p>
           </div>
+        </div>
+
+        <!-- Комментарии -->
+        <div class="rounded-lg bg-gray-800/50 p-4">
+          <h2 class="mb-4 text-lg font-medium text-white">Комментарии</h2>
+          <div v-if="!currentUser" class="py-4 text-center text-gray-400">
+            Войдите, чтобы видеть и оставлять комментарии
+          </div>
+          <template v-else>
+            <div v-if="commentsLoading" class="py-4 text-gray-400">
+              Загрузка комментариев...
+            </div>
+            <div v-else class="space-y-4">
+              <GameCommentItem
+                v-for="c in comments"
+                :key="c.id"
+                :comment="c"
+                :depth="0"
+                :avatar-full-url="avatarFullUrl"
+                :format-comment-date="formatCommentDate"
+                @vote="onVote"
+                @reply="startReply"
+              />
+              <div v-if="comments.length === 0" class="py-4 text-center text-gray-500">
+                Пока нет комментариев
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <p v-if="replyToId" class="mb-2 text-sm text-gray-400">
+                Ответ на комментарий
+                <button
+                  type="button"
+                  class="text-white underline"
+                  @click="cancelReply"
+                >
+                  отмена
+                </button>
+              </p>
+              <textarea
+                v-model="newCommentText"
+                placeholder="Написать комментарий (макс. 200 символов)"
+                maxlength="200"
+                rows="3"
+                class="w-full rounded-lg border border-gray-600 bg-gray-700/50 px-3 py-2 text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none"
+              />
+              <div class="mt-2 flex items-center justify-between">
+                <span class="text-sm text-gray-500">
+                  {{ newCommentText.length }}/200
+                </span>
+                <UButton
+                  size="sm"
+                  color="primary"
+                  :loading="submitting"
+                  :disabled="!newCommentText.trim()"
+                  @click="submitComment"
+                >
+                  Отправить
+                </UButton>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </template>

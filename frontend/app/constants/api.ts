@@ -8,6 +8,9 @@ export const ApiEndpoint = {
   },
   Games: {
     BY_ID: (id: number) => `/games/${id}`,
+    COMMENTS: (id: number) => `/games/${id}/comments`,
+    COMMENT_VOTE: (gameId: number, commentId: number) =>
+      `/games/${gameId}/comments/${commentId}/vote`,
   },
   Users: {
     ME: '/users/me',
