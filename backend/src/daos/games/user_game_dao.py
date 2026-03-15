@@ -18,6 +18,16 @@ class UserGameDAO:
     def build(cls, session: AsyncSession) -> Self:
         return cls(_session=session)
 
+    async def get_by_id(self, game_id: int) -> UserGame | None:
+        result = await self._session.execute(
+            select(UserGame).where(UserGame.id == game_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def increment_view_count(self, game: UserGame) -> None:
+        game.view_count += 1
+        await self._session.flush()
+
     async def get_by_user(
         self,
         user_id: UUID,
