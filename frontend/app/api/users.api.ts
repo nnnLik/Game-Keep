@@ -60,6 +60,19 @@ export interface CreateGamePayload {
   hours_played?: number | null
 }
 
+export interface UserListItem {
+  tag: string | null
+  username: string | null
+  avatar_url: string | null
+  games_count: number
+}
+
+export interface UsersListResponse {
+  items: UserListItem[]
+  next_cursor: string | null
+  has_more: boolean
+}
+
 export interface ProfileByTagResponse {
   username: string | null
   tag: string | null
@@ -71,6 +84,18 @@ export interface ProfileByTagResponse {
 
 export async function fetchMe(api: ApiClient) {
   return api<MeResponse>(ApiEndpoint.Users.ME)
+}
+
+export async function fetchUsersList(
+  api: ApiClient,
+  params?: { limit?: number; cursor?: string | null }
+) {
+  const searchParams = new URLSearchParams()
+  if (params?.limit) searchParams.set('limit', String(params.limit))
+  if (params?.cursor) searchParams.set('cursor', params.cursor)
+  const query = searchParams.toString()
+  const url = query ? `${ApiEndpoint.Users.LIST}?${query}` : ApiEndpoint.Users.LIST
+  return api<UsersListResponse>(url)
 }
 
 export async function fetchProfileByTag(api: ApiClient, tag: string) {

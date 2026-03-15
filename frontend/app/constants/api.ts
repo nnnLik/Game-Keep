@@ -13,6 +13,7 @@ export const ApiEndpoint = {
       `/games/${gameId}/comments/${commentId}/vote`,
   },
   Users: {
+    LIST: '/users',
     BY_TAG: (tag: string) => `/users/by-tag/${tag}`,
     ME: '/users/me',
     ME_BANNER: '/users/me/banner',

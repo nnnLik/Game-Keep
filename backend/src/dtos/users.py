@@ -87,3 +87,16 @@ class ProfileByTagResponseDTO(BaseModel):
     banner_url: str | None
     created_at: str | None
     games: list[GameResponseDTO]
+
+
+class UserListItemDTO(BaseModel):
+    tag: str | None
+    username: str | None
+    avatar_url: str | None
+    games_count: int
+
+
+class UsersListResponseDTO(BaseModel):
+    items: list[UserListItemDTO]
+    next_cursor: str | None
+    has_more: bool

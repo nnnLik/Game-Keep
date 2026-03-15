@@ -1,20 +1,31 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dtos.users import MeResponseDTO, ProfileByTagResponseDTO
+from dtos.users import MeResponseDTO, ProfileByTagResponseDTO, UsersListResponseDTO
 from infra.auth import get_current_user
 from infra.db import get_db
 from models.user import User
 from services.users.create_banner_service import CreateBannerService
 from services.users.delete_banner_service import DeleteBannerService
 from services.users.get_profile_by_tag_service import GetProfileByTagService
+from services.users.list_users_service import ListUsersService
 from services.users.me_service import MeService
 
 router = APIRouter(prefix='/users', tags=['users'])
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
+@router.get('', response_model=UsersListResponseDTO)
+async def list_users(
+    session: SessionDep,
+    limit: int = Query(20, ge=1, le=100),
+    cursor: str | None = Query(None),
+) -> UsersListResponseDTO:
+    service = ListUsersService.build(session)
+    return await service.execute(limit=limit, cursor=cursor)
 
 
 @router.get('/by-tag/{tag}', response_model=ProfileByTagResponseDTO)

@@ -2,11 +2,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
 
   devtools: {
-    enabled: true,
-
-    timeline: {
-      enabled: true,
-    },
+    enabled: false,
   },
 
   modules: [
@@ -45,9 +41,4 @@ export default defineNuxtConfig({
     },
   },
 
-  vite: {
-    optimizeDeps: {
-      include: ['@vue/devtools-core', '@vue/devtools-kit'],
-    },
-  },
 })

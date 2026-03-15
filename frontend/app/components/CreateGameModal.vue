@@ -498,14 +498,27 @@ onUnmounted(() => {
                   </option>
                 </select>
               </div>
-              <label class="flex cursor-pointer items-center gap-2">
-                <input
-                  v-model="form.is_favorite"
-                  type="checkbox"
-                  class="rounded border-gray-600 bg-gray-800 text-emerald-600 focus:ring-emerald-500"
+              <div class="flex items-center gap-3">
+                <button
+                  type="button"
+                  role="checkbox"
+                  :aria-checked="form.is_favorite"
+                  class="flex items-center gap-2 rounded-lg border px-4 py-2 transition-colors"
+                  :class="
+                    form.is_favorite
+                      ? 'border-rose-500/70 bg-rose-500/20 text-rose-400'
+                      : 'border-gray-600 bg-gray-800/50 text-gray-400 hover:border-gray-500 hover:text-gray-300'
+                  "
+                  @click="form.is_favorite = !form.is_favorite"
                 >
-                <span class="text-sm text-gray-300">В избранное</span>
-              </label>
+                  <Icon
+                    name="lucide:heart"
+                    class="size-4"
+                    :class="form.is_favorite ? 'fill-current' : ''"
+                  />
+                  <span>В избранное</span>
+                </button>
+              </div>
               <div>
                 <label for="game-note" class="mb-1 block text-xs text-gray-500">
                   Заметка

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.user import User
@@ -101,3 +101,36 @@ class UserDAO:
         await self._session.flush()
         await self._session.refresh(user)
         return user
+
+    async def get_list_with_games_count(
+        self,
+        limit: int,
+        cursor_games_count: int | None = None,
+        cursor_user_id: UUID | None = None,
+    ) -> list[tuple[User, int]]:
+        from models.user_game import UserGame
+
+        subq = (
+            select(User.id, func.count(UserGame.id).label('games_count'))
+            .select_from(User)
+            .join(UserGame, User.id == UserGame.user_id)
+            .where(User.is_registration_complete.is_(True))
+            .group_by(User.id)
+            .having(func.count(UserGame.id) >= 1)
+        ).subquery()
+
+        stmt = (
+            select(User, subq.c.games_count)
+            .join(subq, User.id == subq.c.id)
+            .order_by(subq.c.games_count.desc(), User.id.asc())
+        )
+
+        if cursor_games_count is not None and cursor_user_id is not None:
+            stmt = stmt.where(
+                (subq.c.games_count < cursor_games_count)
+                | ((subq.c.games_count == cursor_games_count) & (User.id > cursor_user_id))
+            )
+
+        stmt = stmt.limit(limit + 1)
+        result = await self._session.execute(stmt)
+        return list(result.all())
