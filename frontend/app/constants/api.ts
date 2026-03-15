@@ -4,4 +4,8 @@ export const ApiEndpoint = {
     REGISTER: '/auth/register',
     REFRESH: '/auth/refresh',
   },
+  Users: {
+    ME: '/users/me',
+    ME_GAMES: '/users/me/games',
+  },
 } as const

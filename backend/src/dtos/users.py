@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -8,6 +9,7 @@ class MeResponseDTO(BaseModel):
     username: str
     tag: str
     email: str
+    created_at: datetime
 
 
 class GameResponseDTO(BaseModel):

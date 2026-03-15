@@ -24,4 +24,5 @@ class MeService:
             username=user.username,
             tag=user.tag,
             email=user.email,
+            created_at=user.created_at,
         )

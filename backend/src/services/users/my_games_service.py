@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 from uuid import UUID
 
+import constants.game
 from daos.games.user_game_dao import UserGameDAO
 from dtos.users import GameResponseDTO
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +19,7 @@ class MyGamesService:
     async def execute(
         self,
         user_id: UUID,
-        state: str | None = None,
+        state: constants.game.GameStateEnum | None = None,
         is_favorite: bool | None = None,
     ) -> list[GameResponseDTO]:
         games = await self._user_game_dao.get_by_user(
@@ -30,7 +31,7 @@ class MyGamesService:
             GameResponseDTO(
                 id=g.id,
                 name=g.name,
-                state=g.state,
+                state=g.state.value,
                 is_favorite=g.is_favorite,
             )
             for g in games

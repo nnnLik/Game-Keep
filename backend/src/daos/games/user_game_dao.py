@@ -5,7 +5,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.user_game import GAME_STATES, UserGame
+import constants.game
+from models.user_game import UserGame
 
 
 @dataclass
@@ -19,7 +20,7 @@ class UserGameDAO:
     async def get_by_user(
         self,
         user_id: UUID,
-        state: str | None = None,
+        state: constants.game.GameStateEnum | None = None,
         is_favorite: bool | None = None,
     ) -> list[UserGame]:
         stmt = select(UserGame).where(UserGame.user_id == user_id)
@@ -35,11 +36,9 @@ class UserGameDAO:
         self,
         user_id: UUID,
         name: str,
-        state: str,
+        state: constants.game.GameStateEnum,
         is_favorite: bool = False,
     ) -> UserGame:
-        if state not in GAME_STATES:
-            raise ValueError(f'Invalid state: {state}')
 
         game = UserGame(
             user_id=user_id,
