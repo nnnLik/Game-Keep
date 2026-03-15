@@ -4,6 +4,7 @@ from typing import ClassVar, Self
 
 import httpx
 
+from dtos.games import GenreDTO
 from dtos.steam_api import SteamAppResponseDTO
 
 
@@ -12,6 +13,9 @@ class FetchSteamGameResult:
     name: str
     image_url: str | None
     steam_app_id: str
+    genres: list[GenreDTO]
+    developers: list[str]
+    publishers: list[str]
 
 
 class FetchSteamGameService:
@@ -59,8 +63,19 @@ class FetchSteamGameService:
             raise self.GameNotFoundError('Game not found on Steam')
 
         game_detail_dto = steam_response_dto.data
+        genres = [
+            GenreDTO(id=str(g.get('id', '')), description=str(g.get('description', '')))
+            for g in (game_detail_dto.genres or [])
+            if isinstance(g, dict)
+        ]
+        developers = list(game_detail_dto.developers or [])
+        publishers = list(game_detail_dto.publishers or [])
+
         return FetchSteamGameResult(
             name=game_detail_dto.name,
             image_url=game_detail_dto.header_image,
             steam_app_id=app_id,
+            genres=genres,
+            developers=developers,
+            publishers=publishers,
         )

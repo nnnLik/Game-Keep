@@ -40,6 +40,9 @@ class UserGameDAO:
         is_favorite: bool = False,
         image_url: str | None = None,
         steam_app_id: str | None = None,
+        genres: list[str] | None = None,
+        developers: list[str] | None = None,
+        publishers: list[str] | None = None,
     ) -> UserGame:
         game = UserGame(
             user_id=user_id,
@@ -48,6 +51,9 @@ class UserGameDAO:
             is_favorite=is_favorite,
             image_url=image_url,
             steam_app_id=steam_app_id,
+            genres=genres or [],
+            developers=developers or [],
+            publishers=publishers or [],
         )
         self._session.add(game)
         await self._session.flush()

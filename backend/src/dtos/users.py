@@ -12,6 +12,9 @@ class CreateGameRequestDTO(BaseModel):
     steam_app_id: str | None = None
     state: str
     is_favorite: bool = False
+    genres: list[dict[str, str]] | None = None  # [{"id":"1","description":"Action"}]
+    developers: list[str] | None = None
+    publishers: list[str] | None = None
 
     @field_validator('name')
     @classmethod
@@ -46,3 +49,6 @@ class GameResponseDTO(BaseModel):
     steam_app_id: str | None
     state: constants.game.GameStateEnum
     is_favorite: bool
+    genres: list[dict[str, str]] | None = None
+    developers: list[str] | None = None
+    publishers: list[str] | None = None

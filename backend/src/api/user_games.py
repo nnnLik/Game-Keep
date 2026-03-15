@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import constants.game
-from dtos.games import FetchSteamResponseDTO
+from dtos.games import FetchSteamResponseDTO, GenreDTO
 from dtos.users import CreateGameRequestDTO, GameResponseDTO
 from infra.auth import get_current_user
 from infra.db import get_db
@@ -30,6 +30,9 @@ async def fetch_steam_game(
             name=result.name,
             image_url=result.image_url,
             steam_app_id=result.steam_app_id,
+            genres=[GenreDTO(id=g.id, description=g.description) for g in result.genres],
+            developers=result.developers,
+            publishers=result.publishers,
         )
     except FetchSteamGameService.InvalidSteamUrlError as e:
         raise HTTPException(
@@ -52,10 +55,13 @@ async def create_game(
     return await CreateGameService.build(session).execute(
         user_id=current_user.id,
         name=data.name,
-        state=data.state,
+        state=constants.game.GameStateEnum(data.state),
         is_favorite=data.is_favorite,
         image_url=data.image_url,
         steam_app_id=data.steam_app_id,
+        genres=data.genres,
+        developers=data.developers,
+        publishers=data.publishers,
     )
 
 

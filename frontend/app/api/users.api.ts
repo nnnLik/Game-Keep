@@ -12,6 +12,11 @@ export interface MeResponse {
   banner_url: string | null
 }
 
+export interface GenreItem {
+  id: string
+  description: string
+}
+
 export interface GameResponse {
   id: number
   name: string
@@ -19,12 +24,18 @@ export interface GameResponse {
   steam_app_id: string | null
   state: string
   is_favorite: boolean
+  genres: GenreItem[] | null
+  developers: string[] | null
+  publishers: string[] | null
 }
 
 export interface FetchSteamResponse {
   name: string
   image_url: string | null
   steam_app_id: string
+  genres: GenreItem[]
+  developers: string[]
+  publishers: string[]
 }
 
 export interface CreateGamePayload {
@@ -33,6 +44,9 @@ export interface CreateGamePayload {
   steam_app_id?: string | null
   state: string
   is_favorite?: boolean
+  genres?: GenreItem[] | null
+  developers?: string[] | null
+  publishers?: string[] | null
 }
 
 export async function fetchMe(api: ApiClient) {

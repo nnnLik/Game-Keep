@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import Boolean, Enum, ForeignKey, String
+from sqlalchemy.types import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 import constants.game
@@ -17,6 +18,9 @@ class UserGame(Base, IntPkMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     image_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     steam_app_id: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    genres: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    developers: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    publishers: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     state: Mapped[constants.game.GameStateEnum] = mapped_column(
         Enum(
             constants.game.GameStateEnum,

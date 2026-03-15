@@ -24,7 +24,16 @@ class CreateGameService:
         is_favorite: bool = False,
         image_url: str | None = None,
         steam_app_id: str | None = None,
+        genres: list[dict[str, str]] | None = None,
+        developers: list[str] | None = None,
+        publishers: list[str] | None = None,
     ) -> GameResponseDTO:
+        genres_unique: list[str] | None = None
+        if genres:
+            genres_unique = list(dict.fromkeys(g.get('description', '') for g in genres if g.get('description')))
+        developers_unique = list(dict.fromkeys(developers)) if developers else None
+        publishers_unique = list(dict.fromkeys(publishers)) if publishers else None
+
         game = await self._user_game_dao.create(
             user_id=user_id,
             name=name,
@@ -32,7 +41,11 @@ class CreateGameService:
             is_favorite=is_favorite,
             image_url=image_url,
             steam_app_id=steam_app_id,
+            genres=genres_unique,
+            developers=developers_unique,
+            publishers=publishers_unique,
         )
+        genres_response = [{'id': str(i), 'description': s} for i, s in enumerate(game.genres or [])]
         return GameResponseDTO(
             id=game.id,
             name=game.name,
@@ -40,4 +53,7 @@ class CreateGameService:
             steam_app_id=game.steam_app_id,
             state=game.state,
             is_favorite=game.is_favorite,
+            genres=genres_response if genres_response else None,
+            developers=game.developers,
+            publishers=game.publishers,
         )
