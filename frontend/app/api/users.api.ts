@@ -68,7 +68,7 @@ export async function createGame(api: ApiClient, payload: CreateGamePayload) {
 
 export async function uploadBanner(api: ApiClient, file: Blob) {
   const formData = new FormData()
-  formData.append('banner', file)
+  formData.append('banner', file, 'banner.png')
   return api<MeResponse>(ApiEndpoint.Users.ME_BANNER, {
     method: 'PATCH',
     body: formData,

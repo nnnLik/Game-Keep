@@ -10,3 +10,8 @@
 .sidebar-title h1 {
   font-family: var(--font-display);
 }
+
+/* Тултипы поверх модалок (Reka UI Tooltip) */
+[role="tooltip"] {
+  z-index: 9999 !important;
+}

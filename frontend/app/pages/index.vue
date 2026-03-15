@@ -13,16 +13,20 @@ definePageMeta({
 })
 
 const { $api } = useNuxtApp()
-const { fetchMe, fetchMyGames } = await import('~/api/users.api')
+const toast = useToast()
+const { fetchMe, fetchMyGames, uploadBanner, deleteBanner } = await import('~/api/users.api')
 import type { CreateGamePayload, GameResponse } from '~/api/users.api'
 
 const showCreateModal = ref(false)
+const showBannerEditor = ref(false)
+const showDeleteBannerConfirm = ref(false)
 const restoredDraft = ref<
   Partial<CreateGamePayload> & { steam_url?: string; step?: number }
   | null
 >(null)
 
 const user = ref<Awaited<ReturnType<typeof fetchMe>> | null>(null)
+const bannerCacheKey = ref(0)
 const games = ref<GameResponse[]>([])
 const loading = ref(true)
 const gamesLoading = ref(true)
@@ -70,6 +74,49 @@ function avatarFullUrl(avatarUrl: string | null | undefined): string | null {
   if (!avatarUrl) return null
   const base = (config.public.apiBase as string) || ''
   return `${base.replace(/\/$/, '')}/uploads/${avatarUrl}`
+}
+
+function bannerFullUrl(bannerUrl: string | null | undefined): string | null {
+  if (!bannerUrl) return null
+  const base = (config.public.apiBase as string) || ''
+  const url = `${base.replace(/\/$/, '')}/uploads/${bannerUrl}`
+  return `${url}?v=${bannerCacheKey.value}`
+}
+
+function openBannerEditor() {
+  showBannerEditor.value = true
+}
+
+async function onBannerCreated(blob: Blob) {
+  try {
+    const updated = await uploadBanner($api, blob)
+    if (user.value) user.value = updated
+    bannerCacheKey.value++
+    toast.add({ title: 'Баннер загружен', color: 'success' })
+  } catch (e: unknown) {
+    const err = e as { data?: { detail?: string } }
+    toast.add({
+      title: 'Ошибка',
+      description: err?.data?.detail ?? 'Не удалось загрузить баннер',
+      color: 'error',
+    })
+  }
+}
+
+function openDeleteBannerConfirm() {
+  showDeleteBannerConfirm.value = true
+}
+
+async function confirmBannerDelete() {
+  showDeleteBannerConfirm.value = false
+  try {
+    const updated = await deleteBanner($api)
+    if (user.value) user.value = updated
+    bannerCacheKey.value++
+    toast.add({ title: 'Баннер удалён', color: 'success' })
+  } catch {
+    toast.add({ title: 'Ошибка', description: 'Не удалось удалить баннер', color: 'error' })
+  }
 }
 
 function formatRegistrationDate(iso: string) {
@@ -126,9 +173,36 @@ function onGameCreated() {
       <!-- Блок информации о пользователе -->
       <div class="mb-10">
         <div
-          class="relative h-40 w-full rounded-t-2xl bg-gray-700/50"
+          class="group relative h-40 w-full rounded-t-2xl bg-gray-700/50 bg-cover bg-center"
+          :style="
+            bannerFullUrl(user.banner_url)
+              ? { backgroundImage: `url(${bannerFullUrl(user.banner_url)})` }
+              : {}
+          "
           aria-label="Баннер профиля"
-        />
+        >
+          <div
+            class="absolute inset-0 flex items-end justify-end gap-2 rounded-t-2xl bg-black/0 p-2 opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100"
+          >
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-full bg-gray-800/90 text-white transition hover:bg-gray-700"
+              aria-label="Редактировать баннер"
+              @click="openBannerEditor"
+            >
+              <Icon name="lucide:palette" class="size-5" />
+            </button>
+            <button
+              v-if="user.banner_url"
+              type="button"
+              class="flex size-9 items-center justify-center rounded-full bg-gray-800/90 text-white transition hover:bg-red-600/90"
+              aria-label="Удалить баннер"
+              @click="openDeleteBannerConfirm"
+            >
+              <Icon name="lucide:trash-2" class="size-5" />
+            </button>
+          </div>
+        </div>
         <div
           class="relative -mt-20 flex size-36 shrink-0 items-center justify-center overflow-hidden self-start rounded-full border-4 border-gray-950 bg-gray-600"
           aria-label="Аватар"
@@ -243,6 +317,53 @@ function onGameCreated() {
       >
         <Icon name="lucide:plus" class="size-6" />
       </button>
+
+      <BannerEditor
+        :model-value="showBannerEditor"
+        :initial-image-url="bannerFullUrl(user.banner_url)"
+        @update:model-value="showBannerEditor = $event"
+        @created="onBannerCreated"
+      />
+
+      <!-- Подтверждение удаления баннера -->
+      <Teleport to="body">
+        <div
+          v-if="showDeleteBannerConfirm"
+          class="fixed inset-0 z-100 flex items-center justify-center p-4"
+        >
+          <div
+            class="fixed inset-0 bg-black/60"
+            aria-hidden="true"
+            @click="showDeleteBannerConfirm = false"
+          />
+          <div
+            class="relative z-10 w-full max-w-sm rounded-xl bg-gray-900 p-6 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-banner-title"
+            @click.stop
+          >
+            <h2 id="delete-banner-title" class="mb-2 text-lg font-semibold text-white">
+              Удалить баннер?
+            </h2>
+            <p class="mb-6 text-gray-400">
+              Баннер будет удалён без возможности восстановления.
+            </p>
+            <div class="flex justify-end gap-3">
+              <UButton
+                variant="soft"
+                color="neutral"
+                @click="showDeleteBannerConfirm = false"
+              >
+                Отмена
+              </UButton>
+              <UButton color="error" variant="solid" @click="confirmBannerDelete">
+                Удалить
+              </UButton>
+            </div>
+          </div>
+        </div>
+      </Teleport>
 
       <!-- Create Game Modal -->
       <CreateGameModal
