@@ -7,9 +7,9 @@ export const DEFAULT_GAME_STATE = 'backlog' as const
 /** Базовый URL страницы игры в Steam */
 export const STEAM_APP_URL_BASE = 'https://store.steampowered.com/app' as const
 
-/** URL store.steampowered.com/app/{appid} */
+/** URL store.steampowered.com/app/{appid} или steamcommunity.com/app/{appid} */
 export const STEAM_APP_URL_REGEX =
-  /^https?:\/\/store\.steampowered\.com\/app\/(\d+)(?:\/|$)/i
+  /^https?:\/\/(?:store\.steampowered\.com|steamcommunity\.com)\/app\/(\d+)(?:\/|$)/i
 
 export function buildSteamAppUrl(appId: string): string {
   return `${STEAM_APP_URL_BASE}/${appId}/`
@@ -21,7 +21,7 @@ export function isValidSteamAppUrl(url: string): boolean {
 
 /** Placeholder для поля Steam URL */
 export const STEAM_URL_PLACEHOLDER =
-  'https://store.steampowered.com/app/...' as const
+  'https://store.steampowered.com/app/... или steamcommunity.com/app/...' as const
 
 /** Подпись для опционального поля Steam */
 export const STEAM_URL_OPTIONAL_LABEL = '(опционально)' as const
@@ -29,7 +29,7 @@ export const STEAM_URL_OPTIONAL_LABEL = '(опционально)' as const
 /** Сообщения об ошибках */
 export const CreateGameErrors = {
   STEAM_URL_INVALID:
-    'Некорректная ссылка. Нужен формат: store.steampowered.com/app/123',
+    'Некорректная ссылка. Нужен формат: store.steampowered.com/app/123 или steamcommunity.com/app/123',
   FETCH_FAILED: 'Не удалось загрузить данные',
   NAME_REQUIRED: 'Введите название игры',
   CREATE_FAILED: 'Не удалось добавить игру',

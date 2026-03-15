@@ -1,6 +1,7 @@
+from datetime import date
 from uuid import UUID
 
-from sqlalchemy import Boolean, Enum, ForeignKey, String
+from sqlalchemy import Boolean, Date, Enum, Float, ForeignKey, String
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,6 +22,11 @@ class UserGame(Base, IntPkMixin):
     genres: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     developers: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     publishers: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    release_date: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    note: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    date_started: Mapped[date | None] = mapped_column(Date, nullable=True)
+    date_finished: Mapped[date | None] = mapped_column(Date, nullable=True)
+    hours_played: Mapped[float | None] = mapped_column(Float, nullable=True)
     state: Mapped[constants.game.GameStateEnum] = mapped_column(
         Enum(
             constants.game.GameStateEnum,

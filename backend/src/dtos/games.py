@@ -13,3 +13,4 @@ class FetchSteamResponseDTO(BaseModel):
     genres: list[GenreDTO] = []
     developers: list[str] = []
     publishers: list[str] = []
+    release_date: str | None = None

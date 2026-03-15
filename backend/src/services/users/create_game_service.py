@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import date
 from typing import Self
 from uuid import UUID
 
@@ -27,6 +28,11 @@ class CreateGameService:
         genres: list[dict[str, str]] | None = None,
         developers: list[str] | None = None,
         publishers: list[str] | None = None,
+        release_date: str | None = None,
+        note: str | None = None,
+        date_started: date | None = None,
+        date_finished: date | None = None,
+        hours_played: float | None = None,
     ) -> GameResponseDTO:
         genres_unique: list[str] | None = None
         if genres:
@@ -44,6 +50,11 @@ class CreateGameService:
             genres=genres_unique,
             developers=developers_unique,
             publishers=publishers_unique,
+            release_date=release_date,
+            note=note,
+            date_started=date_started,
+            date_finished=date_finished,
+            hours_played=round(hours_played, 1) if hours_played is not None else None,
         )
         genres_response = [{'id': str(i), 'description': s} for i, s in enumerate(game.genres or [])]
         return GameResponseDTO(
@@ -56,4 +67,9 @@ class CreateGameService:
             genres=genres_response if genres_response else None,
             developers=game.developers,
             publishers=game.publishers,
+            release_date=game.release_date,
+            note=game.note,
+            date_started=game.date_started,
+            date_finished=game.date_finished,
+            hours_played=game.hours_played,
         )

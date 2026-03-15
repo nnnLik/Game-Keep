@@ -16,12 +16,13 @@ class FetchSteamGameResult:
     genres: list[GenreDTO]
     developers: list[str]
     publishers: list[str]
+    release_date: str | None
 
 
 class FetchSteamGameService:
     STEAM_API_URL: ClassVar[str] = 'https://store.steampowered.com/api/appdetails'
     STEAM_APP_URL_PATTERN: ClassVar[re.Pattern] = re.compile(
-        r'https?://store\.steampowered\.com/app/(\d+)',
+        r'https?://(?:store\.steampowered\.com|steamcommunity\.com)/app/(\d+)',
         re.IGNORECASE,
     )
     TIMEOUT: ClassVar[int] = 10
@@ -70,6 +71,9 @@ class FetchSteamGameService:
         ]
         developers = list(game_detail_dto.developers or [])
         publishers = list(game_detail_dto.publishers or [])
+        release_date = None
+        if isinstance(game_detail_dto.release_date, dict):
+            release_date = game_detail_dto.release_date.get('date')
 
         return FetchSteamGameResult(
             name=game_detail_dto.name,
@@ -78,4 +82,5 @@ class FetchSteamGameService:
             genres=genres,
             developers=developers,
             publishers=publishers,
+            release_date=release_date,
         )

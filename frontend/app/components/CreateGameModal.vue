@@ -48,7 +48,15 @@ const form = reactive<
   genres: [],
   developers: [],
   publishers: [],
+  release_date: null as string | null,
+  note: null as string | null,
+  date_started: null as string | null,
+  date_finished: null as string | null,
+  hours_played: null as number | null,
 })
+
+const showCustomGenreInput = ref(false)
+const customGenreInput = ref('')
 
 const fetching = ref(false)
 const submitting = ref(false)
@@ -72,6 +80,11 @@ watch(
         form.genres = props.initialDraft.genres ?? []
         form.developers = props.initialDraft.developers ?? []
         form.publishers = props.initialDraft.publishers ?? []
+        form.release_date = props.initialDraft.release_date ?? null
+        form.note = props.initialDraft.note ?? null
+        form.date_started = props.initialDraft.date_started ?? null
+        form.date_finished = props.initialDraft.date_finished ?? null
+        form.hours_played = props.initialDraft.hours_played ?? null
         step.value = props.initialDraft.step ?? 1
       } else {
         steamUrl.value = ''
@@ -83,6 +96,11 @@ watch(
         form.genres = []
         form.developers = []
         form.publishers = []
+        form.release_date = null
+        form.note = null
+        form.date_started = null
+        form.date_finished = null
+        form.hours_played = null
         step.value = 1
       }
       error.value = null
@@ -111,6 +129,11 @@ function closeWithDraft() {
       genres: form.genres.length ? form.genres : undefined,
       developers: form.developers.length ? form.developers : undefined,
       publishers: form.publishers.length ? form.publishers : undefined,
+      release_date: form.release_date ?? undefined,
+      note: form.note ?? undefined,
+      date_started: form.date_started ?? undefined,
+      date_finished: form.date_finished ?? undefined,
+      hours_played: form.hours_played ?? undefined,
       step: step.value,
     })
   }
@@ -144,6 +167,7 @@ async function goToStep2() {
     form.genres = data.genres ?? []
     form.developers = data.developers ?? []
     form.publishers = data.publishers ?? []
+    form.release_date = data.release_date ?? null
     step.value = 2
   } catch (e: unknown) {
     const err = e as { data?: { detail?: string } }
@@ -171,6 +195,20 @@ function goBack() {
   error.value = null
 }
 
+function addCustomGenre() {
+  const val = customGenreInput.value.trim()
+  if (val.length < 3 || val.length > 10) return
+  const exists = form.genres.some((g) => g.description.toLowerCase() === val.toLowerCase())
+  if (exists) return
+  form.genres.push({ id: `custom-${Date.now()}`, description: val })
+  customGenreInput.value = ''
+  showCustomGenreInput.value = false
+}
+
+function removeGenre(index: number) {
+  form.genres.splice(index, 1)
+}
+
 async function submit() {
   const name = form.name.trim()
   if (!name) {
@@ -189,6 +227,14 @@ async function submit() {
       genres: form.genres?.length ? form.genres : undefined,
       developers: form.developers?.length ? form.developers : undefined,
       publishers: form.publishers?.length ? form.publishers : undefined,
+      release_date: form.release_date || undefined,
+      note: form.note || undefined,
+      date_started: form.date_started || undefined,
+      date_finished: form.date_finished || undefined,
+      hours_played:
+        form.hours_played != null && !Number.isNaN(form.hours_played)
+          ? form.hours_played
+          : undefined,
     })
     emit('created')
     close()
@@ -221,7 +267,7 @@ onUnmounted(() => {
         @click="closeWithDraft"
       />
       <div
-        class="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl bg-gray-900 p-6 shadow-xl"
+        class="relative z-10 w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-xl bg-gray-900 p-6 shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-game-title"
@@ -267,8 +313,10 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- Контент с min-h для одинакового размера -->
+        <div class="min-h-[420px] flex flex-col">
         <!-- Шаг 1: Ссылка Steam (опционально) -->
-        <div v-if="step === 1" class="flex flex-col gap-4">
+        <div v-if="step === 1" class="flex flex-col gap-4 flex-1">
           <div>
             <label for="steam-url" class="mb-1 block text-sm text-gray-400">
               Ссылка на игру в Steam {{ STEAM_URL_OPTIONAL_LABEL }}
@@ -368,17 +416,55 @@ onUnmounted(() => {
                   autocomplete="off"
                 >
               </div>
-              <div v-if="form.genres?.length">
+              <div>
                 <span class="mb-1 block text-xs text-gray-500">Жанры</span>
-                <div class="flex flex-wrap gap-1">
+                <div class="flex flex-wrap items-center gap-1">
                   <span
-                    v-for="g in form.genres"
+                    v-for="(g, idx) in form.genres"
                     :key="g.id"
-                    class="rounded bg-gray-700 px-2 py-0.5 text-xs text-gray-300"
+                    class="inline-flex items-center gap-1 rounded bg-gray-700 px-2 py-0.5 text-xs text-gray-300"
                   >
                     {{ g.description }}
+                    <button
+                      type="button"
+                      class="hover:text-white"
+                      aria-label="Удалить"
+                      @click="removeGenre(idx)"
+                    >
+                      <Icon name="lucide:x" class="size-3" />
+                    </button>
                   </span>
+                  <template v-if="showCustomGenreInput">
+                    <input
+                      v-model="customGenreInput"
+                      type="text"
+                      placeholder="3–10 символов"
+                      maxlength="10"
+                      class="w-24 rounded border border-gray-600 bg-gray-800 px-2 py-0.5 text-xs text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none"
+                      @keydown.enter="addCustomGenre"
+                    >
+                    <button
+                      type="button"
+                      class="rounded bg-emerald-600 px-2 py-0.5 text-xs text-white hover:bg-emerald-500"
+                      @click="addCustomGenre"
+                    >
+                      Добавить
+                    </button>
+                  </template>
+                  <button
+                    v-else
+                    type="button"
+                    class="flex size-6 items-center justify-center rounded bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white"
+                    aria-label="Добавить жанр"
+                    @click="showCustomGenreInput = true"
+                  >
+                    <Icon name="lucide:plus" class="size-3" />
+                  </button>
                 </div>
+              </div>
+              <div v-if="form.release_date">
+                <span class="mb-1 block text-xs text-gray-500">Дата выхода</span>
+                <p class="text-sm text-gray-300">{{ form.release_date }}</p>
               </div>
               <div v-if="form.developers?.length">
                 <span class="mb-1 block text-xs text-gray-500"
@@ -420,6 +506,61 @@ onUnmounted(() => {
                 >
                 <span class="text-sm text-gray-300">В избранное</span>
               </label>
+              <div>
+                <label for="game-note" class="mb-1 block text-xs text-gray-500">
+                  Заметка
+                </label>
+                <textarea
+                  id="game-note"
+                  v-model="form.note"
+                  rows="3"
+                  maxlength="500"
+                  placeholder="Заметка или отзыв"
+                  class="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label for="date-started" class="mb-1 block text-xs text-gray-500">
+                    Начал играть
+                  </label>
+                  <div class="flex gap-1">
+                    <input
+                      id="date-started"
+                      v-model="form.date_started"
+                      type="date"
+                      class="flex-1 rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    >
+                  </div>
+                </div>
+                <div>
+                  <label for="date-finished" class="mb-1 block text-xs text-gray-500">
+                    Закончил играть
+                  </label>
+                  <div class="flex gap-1">
+                    <input
+                      id="date-finished"
+                      v-model="form.date_finished"
+                      type="date"
+                      class="flex-1 rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    >
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label for="hours-played" class="mb-1 block text-xs text-gray-500">
+                  Часов сыграно
+                </label>
+                <input
+                  id="hours-played"
+                  v-model.number="form.hours_played"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  placeholder="0"
+                  class="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+              </div>
             </div>
           </div>
 
@@ -484,6 +625,7 @@ onUnmounted(() => {
             </div>
           </div>
         </form>
+        </div>
       </div>
     </div>
   </Teleport>

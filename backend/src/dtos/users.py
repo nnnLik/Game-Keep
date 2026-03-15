@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator
@@ -15,6 +15,11 @@ class CreateGameRequestDTO(BaseModel):
     genres: list[dict[str, str]] | None = None  # [{"id":"1","description":"Action"}]
     developers: list[str] | None = None
     publishers: list[str] | None = None
+    release_date: str | None = None
+    note: str | None = None
+    date_started: date | None = None
+    date_finished: date | None = None
+    hours_played: float | None = None
 
     @field_validator('name')
     @classmethod
@@ -29,6 +34,22 @@ class CreateGameRequestDTO(BaseModel):
         if v not in {e.value for e in constants.game.GameStateEnum}:
             raise ValueError('Invalid state')
         return v
+
+    @field_validator('note')
+    @classmethod
+    def note_max_length(cls, v: str | None) -> str | None:
+        if v is not None and len(v) > 500:
+            raise ValueError('Note max 500 characters')
+        return v
+
+    @field_validator('hours_played')
+    @classmethod
+    def hours_played_non_negative(cls, v: float | None) -> float | None:
+        if v is None:
+            return None
+        if v != v or v < 0:  # NaN or negative
+            raise ValueError('Hours played must be >= 0')
+        return round(v, 1)
 
 
 class MeResponseDTO(BaseModel):
@@ -52,3 +73,8 @@ class GameResponseDTO(BaseModel):
     genres: list[dict[str, str]] | None = None
     developers: list[str] | None = None
     publishers: list[str] | None = None
+    release_date: str | None = None
+    note: str | None = None
+    date_started: date | None = None
+    date_finished: date | None = None
+    hours_played: float | None = None

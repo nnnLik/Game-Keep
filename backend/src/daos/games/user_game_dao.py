@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import date
 from typing import Self
 from uuid import UUID
 
@@ -43,6 +44,11 @@ class UserGameDAO:
         genres: list[str] | None = None,
         developers: list[str] | None = None,
         publishers: list[str] | None = None,
+        release_date: str | None = None,
+        note: str | None = None,
+        date_started: date | None = None,
+        date_finished: date | None = None,
+        hours_played: float | None = None,
     ) -> UserGame:
         game = UserGame(
             user_id=user_id,
@@ -54,6 +60,11 @@ class UserGameDAO:
             genres=genres or [],
             developers=developers or [],
             publishers=publishers or [],
+            release_date=release_date,
+            note=note,
+            date_started=date_started,
+            date_finished=date_finished,
+            hours_played=round(hours_played, 1) if hours_played is not None else None,
         )
         self._session.add(game)
         await self._session.flush()

@@ -27,6 +27,11 @@ export interface GameResponse {
   genres: GenreItem[] | null
   developers: string[] | null
   publishers: string[] | null
+  release_date: string | null
+  note: string | null
+  date_started: string | null
+  date_finished: string | null
+  hours_played: number | null
 }
 
 export interface FetchSteamResponse {
@@ -36,6 +41,7 @@ export interface FetchSteamResponse {
   genres: GenreItem[]
   developers: string[]
   publishers: string[]
+  release_date: string | null
 }
 
 export interface CreateGamePayload {
@@ -47,6 +53,11 @@ export interface CreateGamePayload {
   genres?: GenreItem[] | null
   developers?: string[] | null
   publishers?: string[] | null
+  release_date?: string | null
+  note?: string | null
+  date_started?: string | null
+  date_finished?: string | null
+  hours_played?: number | null
 }
 
 export async function fetchMe(api: ApiClient) {

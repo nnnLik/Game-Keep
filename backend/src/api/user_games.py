@@ -33,6 +33,7 @@ async def fetch_steam_game(
             genres=[GenreDTO(id=g.id, description=g.description) for g in result.genres],
             developers=result.developers,
             publishers=result.publishers,
+            release_date=result.release_date,
         )
     except FetchSteamGameService.InvalidSteamUrlError as e:
         raise HTTPException(
@@ -62,6 +63,11 @@ async def create_game(
         genres=data.genres,
         developers=data.developers,
         publishers=data.publishers,
+        release_date=data.release_date,
+        note=data.note,
+        date_started=data.date_started,
+        date_finished=data.date_finished,
+        hours_played=data.hours_played,
     )
 
 

@@ -48,6 +48,11 @@ class MyGamesService:
                 genres=self._genres_to_response(g.genres),
                 developers=g.developers,
                 publishers=g.publishers,
+                release_date=g.release_date,
+                note=g.note,
+                date_started=g.date_started,
+                date_finished=g.date_finished,
+                hours_played=g.hours_played,
             )
             for g in games
         ]
