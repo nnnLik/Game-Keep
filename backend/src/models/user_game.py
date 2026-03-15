@@ -40,3 +40,8 @@ class UserGame(Base, IntPkMixin):
     view_count: Mapped[int] = mapped_column(default=0, nullable=False)
 
     user = relationship('User', back_populates='games')
+    comments = relationship(
+        'GameComment',
+        back_populates='game',
+        cascade='all, delete-orphan',
+    )

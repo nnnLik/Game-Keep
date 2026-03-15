@@ -8,6 +8,8 @@ from alembic import context
 from conf.settings import settings
 
 from models.base import Base
+import models.game_comment
+import models.game_comment_vote
 import models.user
 import models.user_game
 

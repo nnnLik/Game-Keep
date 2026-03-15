@@ -15,3 +15,8 @@ class User(Base, UUIDPKMixin):
     banner_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
     games = relationship('UserGame', back_populates='user', cascade='all, delete-orphan')
+    game_comments = relationship(
+        'GameComment',
+        back_populates='user',
+        cascade='all, delete-orphan',
+    )
