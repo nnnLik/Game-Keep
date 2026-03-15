@@ -83,3 +83,21 @@ class UserDAO:
         await self._session.flush()
         await self._session.refresh(user)
         return user
+
+    async def update_banner(self, user_id: UUID, banner_url: str) -> User | None:
+        user = await self.get_by_id(user_id)
+        if not user:
+            return None
+        user.banner_url = banner_url
+        await self._session.flush()
+        await self._session.refresh(user)
+        return user
+
+    async def clear_banner(self, user_id: UUID) -> User | None:
+        user = await self.get_by_id(user_id)
+        if not user:
+            return None
+        user.banner_url = None
+        await self._session.flush()
+        await self._session.refresh(user)
+        return user

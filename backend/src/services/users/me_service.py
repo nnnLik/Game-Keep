@@ -27,4 +27,5 @@ class MeService:
             created_at=user.created_at,
             is_registration_complete=user.is_registration_complete,
             avatar_url=user.avatar_url,
+            banner_url=user.banner_url,
         )

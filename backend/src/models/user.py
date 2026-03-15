@@ -12,5 +12,6 @@ class User(Base, UUIDPKMixin):
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_registration_complete: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    banner_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
     games = relationship('UserGame', back_populates='user', cascade='all, delete-orphan')

@@ -36,6 +36,7 @@ class MeResponseDTO(BaseModel):
     created_at: datetime
     is_registration_complete: bool
     avatar_url: str | None
+    banner_url: str | None
 
 
 class GameResponseDTO(BaseModel):
