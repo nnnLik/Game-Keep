@@ -6,6 +6,9 @@ export const ApiEndpoint = {
     COMPLETE_REGISTRATION: '/auth/complete-registration',
     REFRESH: '/auth/refresh',
   },
+  Games: {
+    BY_ID: (id: number) => `/games/${id}`,
+  },
   Users: {
     ME: '/users/me',
     ME_BANNER: '/users/me/banner',
